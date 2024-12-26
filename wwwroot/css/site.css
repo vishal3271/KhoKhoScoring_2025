@@ -1,0 +1,463 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%; 
+  font-family: 'Arial', sans-serif;
+  background-color: rgb(33, 37, 41, 1);
+  color: #fff;
+  overflow-x: hidden;
+}
+
+.navbar{
+  width: 100%;
+  padding: 10px 0;  
+  background-color: #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  
+}
+
+.navbar-brand{
+  font-size: 1.5rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.header {
+  background-color: #333;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+
+}
+
+header .container-fluid {
+  display: flex;
+  padding: 0 20px;
+  margin: 0;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  height: 71px;
+}
+.container-fluid a{
+  margin-left: 20px;
+}
+
+.header-score {
+  font-size: 40px;
+  color: white;
+  margin-left: 15px;
+}
+
+.container {
+  margin-top: 71px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  max-width: 70%;
+  margin-top: 95px;
+  height: 86vh;
+}
+
+table {
+  width: 100%;
+  margin: 0px;
+  border-collapse: collapse;
+  text-align: center;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 20px; /* Bigger padding for square alignment */
+}
+th {
+  background-color: #333;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+.radio-options {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Space between radio buttons */
+}
+td {
+  font-size: 16px;
+}
+
+.form-check-input {
+  width: 25px; /* Increase the size */
+  height: 25px; /* Increase the size */
+  border: 4px solid black; 
+  border-radius: 4px; /* Optional: Add rounded corners */
+  cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.form-check-input:checked {
+  background-color: black; /* Black background when checked */
+  border-color: black; /* Keep border black */
+}
+
+.toss-button.selected {
+  background-color: #444;
+  color: white;
+}
+
+.left-button{
+  width: 100%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+}
+
+.lrh2{
+  height: auto;
+}
+
+.left-panel, .right-panel{
+  flex: 1;
+}
+
+.left-panel{
+  margin-top: 2px;
+  margin-right: 2px;
+  padding: 20px; 
+  text-align: center;
+  overflow: hidden;
+  height: 83vh;
+} 
+.right-panel{
+  margin-left: 2px;
+  padding: 20px;
+  text-align: center;
+  overflow: hidden;
+  height: 83vh;
+} 
+.stats-panel {
+  width: 875px;
+  height: max-content;
+  padding: 0px;
+  text-align: center;
+  overflow: auto;
+  height: 83vh;
+}
+
+.left-panel, .right-panel, .stats-panel {
+  gap: 10px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.stats-panel h2 {
+  background: linear-gradient(45deg, #444, #555);
+  color: #ffffff;
+  margin: -20px -20px 20px -20px;
+  border-radius: 10px 10px 0 0;
+  font-size: 1.5rem;
+}
+
+.stats-button{
+  width: 100%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+}
+.lstats-button, .rstats-button{
+  width: 85%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+  
+}
+
+.toss-button{
+  width: 100%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+}
+
+.toss-button:hover{
+  background: #888;
+  color: #000;
+  transform: scale(1.05);
+  }
+
+.lstats-button:hover, .rstats-button:hover{
+background: #888;
+color: #000;
+transform: scale(1.05);
+}
+
+h2 {
+  background-color: #333;
+  color: #fff;
+  padding: 10px;
+  margin: -20px -20px 20px -20px;
+  border-radius: 10px 10px 0 0;
+  font-size: 1.5rem;
+}
+
+
+.stats-button:hover {
+  background: #888;
+  color: #000;
+  transform: scale(1.05);
+}
+
+.left-panel h2, .right-panel h2{
+  background: linear-gradient(45deg, #444, #555);
+  color: #ffffff;
+  padding: 10px;
+  margin: -20px -20px 20px -20px;
+  border-radius: 10px 10px 0 0;
+  font-size: 1.5rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin: 10px 0;
+}
+
+.datatable{
+  background-color: #333;
+}
+.datatable th td{
+  background-color: #333;
+  font-size: 25px;
+  font-weight: bold;
+
+}
+
+.stats-panel table {
+  width: 100%; 
+  border-collapse: collapse;
+  text-align: center;
+  color: #fff;
+  table-layout: fixed; 
+}
+
+.stats-panel th, .stats-panel td {
+  padding: 4px; 
+  border: 1px solid #555; 
+  font-size: 20px; 
+}
+
+.stats-panel th {
+  background-color: #444; 
+  font-size: 22px; 
+  text-align: center; 
+}
+
+.stats-panel td {
+  font-size: 24px; 
+  font-weight: bold; 
+  padding: 4px;
+  text-align: center;
+}
+
+.container-form{
+  margin: 165px 655px 146px 681px;
+}
+.btn{
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    font-size: 30px;
+    border-radius: 34px;
+    font-weight: bold;
+}
+
+.form-label, .text-center{
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.form-select{
+  border-radius: 28px;
+
+}
+
+.text-center{
+  border-radius: 30px;
+}
+
+.modal .modal-content{
+position: relative;
+display: flex;
+flex-direction: column;
+width: 100%;
+color: white;
+pointer-events: auto;
+background-color: 444;
+background-clip: padding-box;
+border: var(--bs-modal-border-width) solid var(--bs-modal-border-color);
+border-radius: var(--bs-modal-border-radius);
+outline: 0;
+}
+
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-title {
+  color: #333; 
+  font-weight: bold;
+  font-size: 35px;
+}
+
+.modal-body .form-label{
+  color: #333; 
+  font-weight: bold;
+  font-size: 25px;
+}
+
+.btn-m{
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    font-size: 30px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.modal-footer .btn-m:hover {
+  background: #444;
+  color: #000;
+  transform: scale(1.05);
+}
+
+.container-data {
+  display: flex;
+  justify-content: space-around; 
+  gap: 10px; 
+  margin-top: 100px;
+}
+
+.box {
+  flex: 1;
+  max-width: 977px;
+  padding: 8px;
+  background-color: #333;
+  text-align: center;
+  max-height: 1100px;
+  overflow: auto;
+}
+
+.box::-webkit-scrollbar {
+  display: none;
+}
+
+.btn-Scoring{
+  background: linear-gradient(135deg, #444, #666);
+  color: #fff;
+  /* padding: 10px 17px 15px 15px; */
+  padding: 15px;
+  border: none;
+  font-size: 23px;
+  border-radius: 0px;
+  font-weight: bold;
+  position: absolute;
+  bottom: 10px;
+  right: 1089px;
+}
+.btn-Scoring:hover {
+  background: #888;
+  color: #000;
+  transform: scale(1.05);
+}
+
+.middle-box {
+  display: flex;
+  /* flex-direction: column; */
+  gap: 20px;
+  align-items: center;
+  width: 640px;
+  padding: 15px;
+  font-weight: bold;
+  position: fixed;
+  top: 120px;
+  left: 911px;
+  background-color: #333;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.btn-box {
+  background: linear-gradient(135deg, #444, #666);
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  font-size: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.btn-box:hover {
+  background: #888;
+  color: #000;
+  transform: scale(1.05);
+}
+
+.data-form {
+  width: 155px;
+  padding: 4px;
+  border-radius: 12px;
+  color: white;
+  background-color: #444;
+}
+
+.datatable {
+  width: 100%;
+  max-height: 400px; 
+  overflow-y: auto; 
+  background-color: #444;
+  color: white;
+  border-radius: 8px;
+  border: 1px solid #888;   
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+th {
+  background-color: #555;
+}
+tr:nth-child(even) {
+  background-color: #333;
+}

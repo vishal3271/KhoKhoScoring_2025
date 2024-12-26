@@ -1,0 +1,182 @@
+  @page
+@model ScoringModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Stats</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container">
+
+        <div class="left-panel">
+            <h2>SHILLONG LAJONG FC</h2>
+
+            <div class="in-play">
+                <div class="container-undo">
+                    <h3>IN PLAY</h3>
+                </div>
+                <ul id="inPlayList">
+                    @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                    {
+                        foreach (var player in Model.GetMatchStatsScoringList)
+                        {
+                            <li><button class="lstats-button">@player.HomePlayerName</button></li>
+                        }
+                    }
+                    else
+                    {
+                        <li>No players in play</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="in-bench">
+                <h3>ON BENCH</h3>
+                <ul id="inBenchList">
+                     @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                    {
+                        foreach (var player in Model.GetMatchStatsScoringList)
+                        {
+                            <li><button class="lstats-button">@player.HomePlayerName</button></li>
+                        }
+                    }
+                    else
+                    {
+                        <li>No players in play</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+    <div class="stats-panel">
+      <table>
+                <tr>
+                    <th></th>
+                    <th>CHENNAI QUICK</th>
+                    <th>STAT</th>
+                    <th>GUJRAT GIANTS</th>
+                    <th></th>
+                </tr>
+               @if (Model.StatMasterList != null && Model.StatMasterList.Any())
+                {
+                    @foreach (var stat in Model.StatMasterList)
+                    {
+                        <tr>
+                            <td>00</td>
+                            <td>00</td> 
+                            <td><button class="stats-button">@stat.Name</button></td> 
+                            <td>00</td> 
+                            <td>00</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="3">No data available</td></tr>
+                }
+            </table>
+    </div>
+
+    <div class="right-panel">
+       <h2>CHURCHILL BROTHERS</h2>
+            <div class="in-play">
+                <div class="container-undo">
+                    <h3>IN PLAY</h3>
+                </div>
+                <ul>
+                         @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                    {
+                        foreach (var player in Model.GetMatchStatsScoringList)
+                        {
+                            <li><button class="lstats-button">@player.AwayPlayerName</button></li>
+                        }
+                    }
+                    else
+                    {
+                        <li>No players in play</li>
+                    }
+                    </ul>
+            </div>
+            <div class="in-bench">
+                <h3>ON BENCH</h3>
+                <ul>
+                         @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                    {
+                        foreach (var player in Model.GetMatchStatsScoringList)
+                        {
+                            <li><button class="lstats-button">@player.AwayPlayerName</button></li>
+                        }
+                    }
+                    else
+                    {
+                        <li>No players in play</li>
+                    }
+                    </ul>
+            </div>
+    </div>
+
+</div>
+<script>
+
+
+var matchNo = '@ViewBag.MatchNo';
+    var tournamentId = '@ViewBag.TournamentId';
+    console.log("Match No from View:", matchNo);
+    console.log("Tournament ID from View:", tournamentId);
+
+console.log("Fetching with URL:", `/Scoring/GetPlayerStats?matchNo=${matchNo}&tournamentId=${tournamentId}`);
+
+
+   fetch(`${window.location.origin}/GetPlayerStats?matchNo=${matchNo}&tournamentId=${tournamentId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch player stats');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const inPlayList = document.getElementById('inPlayList');
+            const inBenchList = document.getElementById('inBenchList');
+
+            if (!inPlayList || !inBenchList) {
+                console.error('Error: List elements not found');
+                return;
+            }
+
+            inPlayList.innerHTML = '';
+            inBenchList.innerHTML = '';
+
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(player => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Player ID: ${player.PlayerId} - Name: ${player.PlayerName}`;
+
+                    if (player.Status === "In Play") {
+                        inPlayList.appendChild(listItem);
+                    } else if (player.Status === "In Bench") {
+                        inBenchList.appendChild(listItem);
+                    }
+                });
+            } else {
+                console.warn('No player data available or empty list');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+    });
+);
+
+</script>
+
+
+</body>
+</html>

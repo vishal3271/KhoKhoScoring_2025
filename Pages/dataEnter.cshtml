@@ -1,0 +1,166 @@
+@page
+@model dataEntryModel
+@{
+    ViewData["Title"] = "Home page";
+    var tournamentId = ViewData["TournamentId"] as string;
+    var matchNo = ViewData["MatchNo"] as string;
+    var matchName = ViewData["MatchName"] as string;
+    var playerStats = Model.GetMatchStatsScoringList; 
+    @* ViewData["playername"] = Model.dataEnterScoringAwayList;
+    ViewData["playername"] = Model.dataEnterScoringHomeList; *@
+    //var playerName =Model.dataEnterScoringList;
+  }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    using _24IN_Ultimate_KHO_KHO_VS.Data;
+    using _24IN_Ultimate_KHO_KHO_VS.Data;
+    <title>StartForm</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container-data">
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Name</th>
+            <th scope="col">Batch No</th>
+            <th scope="col">Player Status</th>
+          </tr>
+        </thead>
+        <tbody>
+           @if (Model.dataEnterScoringHomeList != null && Model.dataEnterScoringHomeList.Any())
+            {
+                int serialNo = 1; // To generate S.No for each player
+                foreach (var player in Model.dataEnterScoringHomeList)
+                {
+                    <tr>
+                        <th scope="row">@serialNo</th>
+                        <td>@player.playername</td> <!-- Populate player name -->
+                        <td>
+                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                                <option value="" selected>Batch No</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                                <option value="" selected>Player status</option>
+                                <option value="InPlay">InPlay</option>
+                                <option value="InBench">InBench</option>
+                            </select>
+                        </td>
+                    </tr>
+                    serialNo++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">No player data available</td>
+                </tr>
+            }
+        </tbody>
+      </table>
+    </div>
+
+              <div class="middle-box">
+                <div>
+                    <label for="TeamName" class="form-label">Choose Winning Team</label>
+                    <select class="form-select" id="TeamName" name="TeamSelection" required>
+                        <option value="" selected>Select Team</option>           
+                       @foreach (var team in Model.GetMatchStatsScoringList
+                        .SelectMany(x => new[] { x.HomeTeamName, x.AwayTeamName })
+                        .Distinct())
+                          {
+                              <option value="@team">@team</option>
+                          }
+                    </select>
+                </div>
+                <div>
+                    <label for="PlayerStat" class="form-label">Choose Player Stat</label>
+                    <select class="form-select" id="PlayerStat" name="PlayerStatSelection" required>
+                        <option value="" selected>Select Attack or Defend</option>
+                        <option value="Attacking">Attacking</option>
+                        <option value="Defending">Defending</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-box" id="save">Save</button>
+              </div>
+
+
+                <button type="button" class="btn-Scoring" id="confirmNavigatetoScoring">Scoring</button>
+
+
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Name</th>
+            <th>Batch No</th>
+            <th>Player Status</th>
+
+          </tr>
+        </thead>
+        <tbody>
+           @if (Model.dataEnterScoringAwayList != null && Model.dataEnterScoringAwayList.Any())
+            {
+                int serialNo = 1; // To generate S.No for each player
+                foreach (var player in Model.dataEnterScoringAwayList)
+                {
+                    <tr>
+                        <th scope="row">@serialNo</th>
+                        <td>@player.playername</td> <!-- Populate player name -->
+                        <td>
+                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                                <option value="" selected>Batch No</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                                <option value="" selected>Player status</option>
+                                <option value="InPlay">InPlay</option>
+                                <option value="InBench">InBench</option>
+                            </select>
+                        </td>
+                    </tr>
+                    serialNo++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">No player data available</td>
+                </tr>
+            }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+
+<script>
+</script>
+
+</body>
+</html>
+
+
