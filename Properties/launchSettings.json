@@ -3,8 +3,6 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      //"applicationUrl": "http://192.168.6.209:5000", 
-      // "applicationUrl": "http://localhost:61232/StartForm",
       "applicationUrl": "https://localhost:7154",
       "sslPort": 44309
     }
@@ -14,17 +12,14 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      //"applicationUrl": "http://192.168.6.209:5000",     
-      // "applicationUrl": "https://localhost:7154/StartForm",
       "applicationUrl": "https://localhost:7154",
-      "environmentVariables": {
+     "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      // "applicationUrl": "https://localhost:7154/StartForm",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

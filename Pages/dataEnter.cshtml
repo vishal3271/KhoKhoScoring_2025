@@ -2,13 +2,12 @@
 @model dataEntryModel
 @{
     ViewData["Title"] = "Home page";
-    var tournamentId = ViewData["TournamentId"] as string;
-    var matchNo = ViewData["MatchNo"] as string;
-    var matchName = ViewData["MatchName"] as string;
-    var playerStats = Model.GetMatchStatsScoringList; 
-    @* ViewData["playername"] = Model.dataEnterScoringAwayList;
-    ViewData["playername"] = Model.dataEnterScoringHomeList; *@
-    //var playerName =Model.dataEnterScoringList;
+    var hometeamName = Model.dataEnterScoringHomeList?.FirstOrDefault()?.teamName;
+    var awayteamName = Model.dataEnterScoringAwayList?.FirstOrDefault()?.teamName;
+    var hometeamId = Model.dataEnterScoringHomeList?.FirstOrDefault()?.teamId;
+    var awayteamId = Model.dataEnterScoringAwayList?.FirstOrDefault()?.teamId;
+    var TournamentId=Model.dataEnterScoringHomeList?.FirstOrDefault()?.idTournament;
+    var matchId=Model.dataEnterScoringHomeList?.FirstOrDefault()?.idMatch;
   }
 
 <!DOCTYPE html>
@@ -17,36 +16,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     using _24IN_Ultimate_KHO_KHO_VS.Data;
-    using _24IN_Ultimate_KHO_KHO_VS.Data;
     <title>StartForm</title>
-    <link rel="stylesheet" href="/css/site.css">
+    <link rel="stylesheet" href="~/css/site.css">
 
 </head>
 <body>
 
 <div class="container-data">
+    @* home team data *@
+    <form method="post" action="/dataEnter/SavePlayerDetail" class="flex-form">
+    <input type="hidden" name="matchId" value="@matchId" />
+    <input type="hidden" name="MatchNo" value="@ViewData["MatchNo"]" />
+    <input type="hidden" name="TournamentId" value="@TournamentId" />
+    <input type="hidden" name="hometeamname" value="@hometeamName" />
+    <input type="hidden" name="awayteamname" value="@awayteamName" />
+    <input type="hidden" name="hometeamid" value="@hometeamId" />
+    <input type="hidden" name="awayteamid" value="@awayteamId" />
+    <input type="hidden" name="isAttacking" value="@ViewData["IsAttacking"]" />
+    <input type="hidden" name="tossWinnerId" value="@ViewData["TossWinnerId"]" />
     <div class="box">
-      <table class="datatable">
+      <table class="datatable" id="homeTeamTable">
         <thead>
           <tr>
             <th scope="col">S.No</th>
-            <th scope="col">Name</th>
+            <th scope="col">@hometeamName</th>
             <th scope="col">Batch No</th>
             <th scope="col">Player Status</th>
+            <th scope="col">Is Wazir</th>
           </tr>
         </thead>
         <tbody>
            @if (Model.dataEnterScoringHomeList != null && Model.dataEnterScoringHomeList.Any())
             {
-                int serialNo = 1; // To generate S.No for each player
+                int serialNo = 1;
                 foreach (var player in Model.dataEnterScoringHomeList)
                 {
                     <tr>
                         <th scope="row">@serialNo</th>
-                        <td>@player.playername</td> <!-- Populate player name -->
+                         <td name="homePlayerName">              
+                            <input type="text" class="inputtag" name="homePlayerName[]" value="@player.playername" readonly />
+                            <input type="hidden" name="homeplayerid[]" value="@player.playerid" readonly />
+                        </td>
                         <td>
-                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                            <select class="data-form batch-no-dropdown" id="dropdownBatch1" name="homeBatchNo[]" required>
                                 <option value="" selected>Batch No</option>
+                                <option value="0">0</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -54,11 +68,21 @@
                             </select>
                         </td>
                         <td>
-                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
-                                <option value="" selected>Player status</option>
-                                <option value="InPlay">InPlay</option>
-                                <option value="InBench">InBench</option>
+                            <select class="data-form player-status-dropdown" id="dropdownPStat1" name="homePlayerStatus[]" required>
+                                <option value="" selected>Player Status</option>
+                                <option value="In Play">In Play</option>
+                                <option value="In Bench">In Bench</option>
+                                <option value="Not Used">Not Used</option>
                             </select>
+                        </td>
+                        <td>
+                            <select class="data-form iswazir-dropdown" id="dropdownWazir1" name="iswazir[]" required>
+                                <option value="" selected>Is Wazir</option>
+                                <option value="true">YES</option>
+                                <option value="false" >No</option>
+                            </select>
+                                @* <input  class="check" id="checkBoxId" type="hidden" name="iswazir[]" value="0">
+                                <input class="check" id="checkBoxId" type="checkbox" name="iswazir[]" value="1"> *@
                         </td>
                     </tr>
                     serialNo++;
@@ -73,58 +97,45 @@
         </tbody>
       </table>
     </div>
-
-              <div class="middle-box">
-                <div>
-                    <label for="TeamName" class="form-label">Choose Winning Team</label>
-                    <select class="form-select" id="TeamName" name="TeamSelection" required>
-                        <option value="" selected>Select Team</option>           
-                       @foreach (var team in Model.GetMatchStatsScoringList
-                        .SelectMany(x => new[] { x.HomeTeamName, x.AwayTeamName })
-                        .Distinct())
-                          {
-                              <option value="@team">@team</option>
-                          }
-                    </select>
-                </div>
-                <div>
-                    <label for="PlayerStat" class="form-label">Choose Player Stat</label>
-                    <select class="form-select" id="PlayerStat" name="PlayerStatSelection" required>
-                        <option value="" selected>Select Attack or Defend</option>
-                        <option value="Attacking">Attacking</option>
-                        <option value="Defending">Defending</option>
-                    </select>
-                </div>
-                <button type="button" class="btn-box" id="save">Save</button>
-              </div>
+@* toss button table *@
+    
+<table class="toss-table">
+        <tr>
+            <th>
+                <button type="button" class="btn-Toss" id="toggleButton">Toss</button>
+            </th>
+        </tr>
+    </table>
 
 
-                <button type="button" class="btn-Scoring" id="confirmNavigatetoScoring">Scoring</button>
-
-
+@* away team data *@
     <div class="box">
-      <table class="datatable">
+      <table class="datatable" id="awayTeamTable">
         <thead>
           <tr>
             <th scope="col">S.No</th>
-            <th scope="col">Name</th>
+            <th scope="col" name="awayteamname">@awayteamName</th>
             <th>Batch No</th>
             <th>Player Status</th>
-
+            <th scope="col">Is Wazir</th>
           </tr>
         </thead>
         <tbody>
            @if (Model.dataEnterScoringAwayList != null && Model.dataEnterScoringAwayList.Any())
             {
-                int serialNo = 1; // To generate S.No for each player
+                int serialNo = 1; 
                 foreach (var player in Model.dataEnterScoringAwayList)
                 {
                     <tr>
                         <th scope="row">@serialNo</th>
-                        <td>@player.playername</td> <!-- Populate player name -->
+                        <td name="awayplayername">
+                            <input type="text" class="inputtag" name="awayPlayerName[]" value="@player.playername" readonly />
+                            <input type="hidden" name="awayplayerid[]" value="@player.playerid" readonly />
+                            </td>
                         <td>
-                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                            <select class="data-form batch-no-dropdown" id="dropdownBatch2" name="awayBatchNo[]" required>
                                 <option value="" selected>Batch No</option>
+                                <option value="0">0</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -132,11 +143,21 @@
                             </select>
                         </td>
                         <td>
-                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
-                                <option value="" selected>Player status</option>
-                                <option value="InPlay">InPlay</option>
-                                <option value="InBench">InBench</option>
+                            <select class="data-form player-status-dropdown" id="dropdownPStat2" name="awayPlayerStatus[]" required>
+                                <option value="" selected>Player Status</option>
+                                <option value="In Play">In Play</option>
+                                <option value="In Bench">In Bench</option>
+                                <option value="Not Used">Not Used</option>
                             </select>
+                        </td>
+                         <td>
+                              <select class="data-form iswazir-dropdown" id="dropdownWazir2" name="iswazir[]" required>
+                                <option value="" selected>Is Wazir</option>
+                                <option value="true">YES</option>
+                                <option value="false" >No</option>
+                            </select>
+                            @* <input  class="check" id="checkBoxId" type="hidden" name="iswazir[]" value="0">
+                            <input class="check" type="checkbox" id="checkBoxId"  name="iswazir[]"> *@
                         </td>
                     </tr>
                     serialNo++;
@@ -151,16 +172,138 @@
         </tbody>
       </table>
     </div>
+    <button type="submit" class="btn-Scoring" id="clearStorageBtn" onsubmit="return validateForm()">Scoring</button>
+
+    </form>
+
+
+
+
+        @* toss data *@           
+            <form method="post" action="/dataEnter/SaveToss">
+            <div class="middle-box">
+                <div>
+                    <label for="TeamName" class="form-label">Choose Winning Team</label>
+                    <select class="form-select" id="TeamName" name="teamSelection" required>
+                        <option value="" selected>Select Team</option>
+                        <option value="@hometeamId">@hometeamName</option>
+                        <option value="@awayteamId">@awayteamName</option> 
+                    </select>
+                </div>
+                <div>
+                    <label for="PlayerStat" class="form-label">Choose Player Stat</label>
+                    <select class="form-select" id="PlayerStat" name="playerStatSelection" required>
+                        <option value="" selected>Select Attack or Defend</option>
+                        <option value="1">Attacking</option>
+                        <option value="0">Defending</option>
+                    </select>
+                </div>
+                <input type="hidden" name="matchId" value="@matchId" />
+                <input type="hidden" name="TournamentId" value="@TournamentId" />
+                <input type="hidden" name="MatchNo" value="@ViewData["MatchNo"]" />
+                <button type="submit" class="btn-box" id="save">Save</button>
+            </div>
+        </form>
+
   </div>
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
 
 <script>
+
+    ////data bind in dataEnter.cshtml
+
+document.addEventListener("DOMContentLoaded", function () {
+    var playerData = {
+        home: @Html.Raw(Json.Serialize(Model.dataEnterScoringHomeList)),
+        away: @Html.Raw(Json.Serialize(Model.dataEnterScoringAwayList))
+    };
+
+    console.log("Player Data: ", playerData);
+
+    // Populate Home Table
+    var homeRows = document.querySelectorAll("#homeTeamTable tbody tr");
+    homeRows.forEach((row, index) => {
+        var statusDropdown = row.querySelector(".player-status-dropdown");
+        var batchDropdown = row.querySelector(".batch-no-dropdown");
+        var wazirDropdown = row.querySelector(".iswazir-dropdown");
+        var player = playerData.home[index];
+
+        if (player) {
+            console.log("Player Object: ", player);
+            // Set Player Status
+            if (statusDropdown) {
+                console.log(`Setting status for home player: ${player.playername}, Status: ${player.playerstatus}`);
+                statusDropdown.value = player.playerstatus.trim();
+            } else {
+                console.log(`Status dropdown missing for home row ${index + 1}`);
+            }
+
+            // Set Batch No
+            if (batchDropdown) {
+                console.log(`Setting batch number for home player: ${player.playername}, Batch No: ${player.batchno}`);
+                batchDropdown.value = player.batchno;
+            } else {
+                console.log(`Batch dropdown missing for home row ${index + 1}`);
+            }
+            //wazir
+             if (wazirDropdown) {
+                console.log(`Setting Wazir for home player: ${player.playername}, Wazir: ${player.isWazir}`);
+                wazirDropdown.value = player.isWazir ? "true" : "false"; // Set based on the isWazir field
+            } else {
+                console.log(`Wazir dropdown missing for home row ${index + 1}`);
+            }
+        } else {
+            console.log(`Player data missing for home row ${index + 1}`);
+        }
+    });
+
+    // Populate Away Table
+    var awayRows = document.querySelectorAll("#awayTeamTable tbody tr");
+    awayRows.forEach((row, index) => {
+        var statusDropdown = row.querySelector(".player-status-dropdown");
+        var batchDropdown = row.querySelector(".batch-no-dropdown");
+        var wazirDropdown = row.querySelector(".iswazir-dropdown");
+        var player = playerData.away[index];
+
+        if (player) {
+            console.log("Player Object: ", player);
+            // Set Player Status
+            if (statusDropdown) {
+                console.log(`Setting status for away player: ${player.playername}, Status: ${player.playerstatus}`);
+                statusDropdown.value = player.playerstatus.trim();
+            } else {
+                console.log(`Status dropdown missing for away row ${index + 1}`);
+            }
+
+            // Set Batch No
+            if (batchDropdown) {
+                console.log(`Setting batch number for away player: ${player.playername}, Batch No: ${player.batchno}`);
+                batchDropdown.value = player.batchno;
+            } else {
+                console.log(`Batch dropdown missing for away row ${index + 1}`);
+            }
+
+             // Set Wazir
+            if (wazirDropdown) {
+                console.log(`Setting Wazir for away player: ${player.playername}, Wazir: ${player.isWazir}`);
+                wazirDropdown.value = player.isWazir ? "true" : "false"; // Set based on the isWazir field
+            } else {
+                console.log(`Wazir dropdown missing for away row ${index + 1}`);
+            }
+           
+        } else {
+            console.log(`Player data missing for away row ${index + 1}`);
+        }
+    });
+});
+
+ 
 </script>
 
 </body>
 </html>
-
-

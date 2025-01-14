@@ -25,9 +25,8 @@ public class IndexModel : PageModel
             .FromSqlInterpolated($"select idTournament,Tournament_Name from TournamentMaster")
             .ToListAsync();
 
-
         MatchList=await _context.MatchMaster
-        .FromSqlInterpolated($"select idTournament,MatchNo,Match_Name from MatchMaster")
+        .FromSqlInterpolated($"SELECT idTournament, MatchNo, Match_Name, idMatch FROM MatchMaster ORDER BY CAST(MatchNo AS INT) DESC;")
         .ToListAsync();
 
 

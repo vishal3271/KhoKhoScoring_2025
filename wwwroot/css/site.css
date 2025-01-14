@@ -5,6 +5,10 @@
   box-sizing: border-box;
 }
 
+body {
+  zoom: 0.66;
+}
+
 html, body {
   width: 100%;
   height: 100%; 
@@ -138,22 +142,22 @@ td {
   padding: 20px; 
   text-align: center;
   overflow: hidden;
-  height: 83vh;
+  height: 105vh;
 } 
 .right-panel{
   margin-left: 2px;
   padding: 20px;
   text-align: center;
   overflow: hidden;
-  height: 83vh;
+  height: 105vh;
 } 
 .stats-panel {
-  width: 875px;
+  width: 621px;
   height: max-content;
   padding: 0px;
   text-align: center;
   overflow: auto;
-  height: 83vh;
+  height: 105vh;
 }
 
 .left-panel, .right-panel, .stats-panel {
@@ -170,7 +174,7 @@ td {
   font-size: 1.5rem;
 }
 
-.stats-button{
+.stats-button, .lstats-button, .rstats-button {
   width: 100%;
   padding: 0px;
   background: linear-gradient(135deg, #444, #666);
@@ -180,17 +184,29 @@ td {
   font-size: 23px;
   transition: all 0.3s ease;
 }
-.lstats-button, .rstats-button{
-  width: 85%;
-  padding: 0px;
-  background: linear-gradient(135deg, #444, #666);
-  border: none;
-  color: #fff;
-  border-radius: 0px;
-  font-size: 23px;
-  transition: all 0.3s ease;
-  
+
+.lstats-button, .rstats-button {
+  width: 85%; 
 }
+
+.stats-button:hover, .lstats-button:hover, .rstats-button:hover {
+  background: #444;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.lstats-button:focus, .rstats-button:focus, .stats-button:focus {
+  background-color: lightblue;
+  color: #fff;
+  outline: none; 
+}
+
+.lstats-button:active, .rstats-button:active, .stats-button:active {
+  background-color: lightblue;
+  color: black;
+}
+
+
 
 .toss-button{
   width: 100%;
@@ -209,11 +225,7 @@ td {
   transform: scale(1.05);
   }
 
-.lstats-button:hover, .rstats-button:hover{
-background: #888;
-color: #000;
-transform: scale(1.05);
-}
+
 
 h2 {
   background-color: #333;
@@ -224,12 +236,6 @@ h2 {
   font-size: 1.5rem;
 }
 
-
-.stats-button:hover {
-  background: #888;
-  color: #000;
-  transform: scale(1.05);
-}
 
 .left-panel h2, .right-panel h2{
   background: linear-gradient(45deg, #444, #555);
@@ -256,7 +262,20 @@ li {
   background-color: #333;
   font-size: 25px;
   font-weight: bold;
+  width:50px;
+}
 
+.box th {
+  max-width: 150px; /* Set a max width for headers */
+}
+
+.box th:hover {
+  white-space: normal; /* Allows full display on hover */
+  overflow: visible; 
+  text-overflow: unset;
+  background-color: #333; /* Optional: highlight */
+  z-index: 1;
+  position: relative;
 }
 
 .stats-panel table {
@@ -360,8 +379,8 @@ outline: 0;
 
 .container-data {
   display: flex;
-  justify-content: space-around; 
-  gap: 10px; 
+  align-items: center;
+  gap: 0px; 
   margin-top: 100px;
 }
 
@@ -378,11 +397,15 @@ outline: 0;
 .box::-webkit-scrollbar {
   display: none;
 }
-
+.flex-form{
+  display: flex;
+  gap: 39px;
+  max-width: 100%;
+  margin-left: 141px;  
+}
 .btn-Scoring{
   background: linear-gradient(135deg, #444, #666);
   color: #fff;
-  /* padding: 10px 17px 15px 15px; */
   padding: 15px;
   border: none;
   font-size: 23px;
@@ -390,7 +413,8 @@ outline: 0;
   font-weight: bold;
   position: absolute;
   bottom: 10px;
-  right: 1089px;
+  width: 100%;
+  right: 2px;
 }
 .btn-Scoring:hover {
   background: #888;
@@ -398,9 +422,9 @@ outline: 0;
   transform: scale(1.05);
 }
 
+
 .middle-box {
-  display: flex;
-  /* flex-direction: column; */
+  display: none;
   gap: 20px;
   align-items: center;
   width: 640px;
@@ -460,4 +484,289 @@ th {
 }
 tr:nth-child(even) {
   background-color: #333;
+}
+
+.bottom-right-img {
+    width: 8%;
+    height: 12vh;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    filter: drop-shadow(2px 4px 6px white);
+}
+.bottom-left-img {
+  width: 193%;
+  height: 12vh;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  filter: drop-shadow(2px 4px 6px white);
+  rotate: 180deg;
+}
+
+.inputtag{
+  background-color: #333;
+  color: #fff;
+  width: 300px;
+}
+
+.toss-table {
+    border-collapse: collapse;
+    width: 0%; 
+}
+
+.toss-table th{
+    text-align: center;
+    background-color: transparent;
+    border: none;
+}
+
+.btn-Toss {
+    font-size: 16px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-Toss:hover {
+    background-color: #444;
+}
+
+.inningData {
+  position: absolute;
+  top: 130px;  
+  left: 30px;
+  width: 313px;
+}
+
+.timerData {
+  position: absolute;
+  top: 847px;  
+  left: 10px;
+  width: 385px;
+  text-align: center;
+}
+
+.inningtime, .normaltimmer {
+  font-size: 30px; 
+  font-weight: bold; 
+  display: block;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.inningtime {
+  font-size: 65px; 
+  line-height: 0.5;
+}
+
+.normaltimmer {
+  font-size: 65px;
+  line-height: 0.5;
+}
+
+.startstopbtn, .resetInnbtn, .resetBatchbtn, .editInn, .editbatch{
+  width: 100%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.startstopbtn:hover, .resetbtn:hover, .resetInnbtn:hover, .resetBatchbtn:hover, .editInn:hover, .editbatch:hover {
+  background: #444;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+table {
+  width: 100%;
+  margin: 0 auto;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+}
+
+.check {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.check:hover{
+  transform: scale(1.05);
+  background-color: green;
+  border-color: green;
+}
+
+
+.scoringData {
+  position: absolute;
+  top: 951px;
+  left: 978px;
+  width: 385px;
+  text-align: center;
+}
+
+.score-button {
+  padding: 5px 10px;
+  margin: 2px;
+  font-size: 25px;
+  border: none;
+  border-radius: 0px;
+  background-color: #444;
+  color: white;
+  cursor: pointer;
+}
+
+.score-button:hover {
+  background-color: #0056b3;
+}
+
+.homescore{
+  position: absolute;
+  top: 904px;
+  left: 969px;
+  width: 150px;
+  text-align: center;
+  font-size: 25px;
+}
+
+.awayscore{
+    position: absolute;
+    top: 904px;
+    left: 1219px;
+    width: 150px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.grid-container{
+  position: absolute;
+    top: 904px;
+    left: 1428px;
+    width: 883px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.grid{
+  padding: 0px;
+  font-size: 25px;
+  background: #333;
+  color: #fff;
+  border-radius: 20px;
+  width: 175px;
+}
+
+.batch-dropdown{
+  position: absolute;
+  top: 844px;
+  left: 1874px;
+  width: 167px;
+  text-align: center;
+  font-size: 25px;
+}
+
+.data-stats {
+  width: 155px;
+  padding: 4px;
+  border-radius: 12px;
+  color: white;
+  background-color: #444;
+}
+
+.time-container{
+  position: absolute;
+  top: 914px;
+  left: 735px;
+  width: 167px;
+  text-align: center;
+  font-size: 25px;
+}
+
+.finalSave{
+  width: 100%;
+  padding: 0px;
+  background: linear-gradient(135deg, #444, #666);
+  border: none;
+  color: #fff;
+  border-radius: 0px;
+  font-size: 23px;
+  transition: all 0.3s ease;
+}
+
+.time-container th,td{
+  font-size: 20px;
+}
+
+.save{
+  position: absolute;
+    top: 855px;
+    left: 1464px;
+    width: 167px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.popup {
+  display: absolute;
+    position: fixed;
+    top: 842px;
+    left: 1161px;
+    transform: translate(-50%, -50%);
+    background-color:hwb(54 42% 5%);
+    color: black;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 25px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.popup.show {
+  display: block;
+  opacity: 1;
+}
+
+.undo{
+  position: absolute;
+    top: 855px;
+    left: 2116px;
+    width: 167px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.clockIn{
+  position: absolute;
+    top: 855px;
+    left: 988px;
+    width: 167px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.clockOut{
+  position: absolute;
+    top: 855px;
+    left: 1180px;
+    width: 167px;
+    text-align: center;
+    font-size: 25px;
 }

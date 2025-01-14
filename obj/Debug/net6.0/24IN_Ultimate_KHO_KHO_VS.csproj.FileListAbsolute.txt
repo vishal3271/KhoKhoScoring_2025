@@ -75,6 +75,7 @@ D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\24IN_Ultimate_KHO_KHO_VS.csproj.Cor
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\24IN_Ultimate_KHO_KHO_VS.MvcApplicationPartsAssemblyInfo.cache
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\24IN_Ultimate_KHO_KHO_VS.RazorAssemblyInfo.cache
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\24IN_Ultimate_KHO_KHO_VS.RazorAssemblyInfo.cs
+D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\24IN_Ultimate_KHO_KHO_VS.sourcelink.json
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\scopedcss\Pages\Shared\_Layout.cshtml.rz.scp.css
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\scopedcss\bundle\24IN_Ultimate_KHO_KHO_VS.styles.css
 D:\24IN_Ultimate_KHO_KHO_VS\obj\Debug\net6.0\scopedcss\projectbundle\24IN_Ultimate_KHO_KHO_VS.bundle.scp.css

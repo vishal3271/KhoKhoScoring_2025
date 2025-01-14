@@ -1,0 +1,2421 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartForm</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container-form">
+        <h2 class="text-center">TOURNAMENT / MATCH</h2>
+        <form action="/Scoring" method="post">
+            <div class="mb-3">
+                <label for="dropdown1" class="form-label">TOURNAMENT</label>
+                <select class="form-select" id="dropdown1" name="TournamentId" required>
+                    <option value="" selected>Select an option</option>
+                    @if (Model.TournamentList != null && Model.TournamentList.Any())
+                    {    
+                        @foreach(var stat in Model.TournamentList)
+                        {
+                            <option value="@stat.idTournament">@stat.Tournament_Name</option>
+                        }
+                    }   
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="dropdown2" class="form-label">MATCH</label>
+                <select class="form-select" id="dropdown2" name="MatchId" required>
+                    <option value="" selected>Select an option</option>
+                </select>
+            </div>
+            <div class="text-end">
+            <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="fetchTossData()">Go For Toss</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel" style="">TOSS</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+  <table>
+    <thead>
+      <tr>
+        <th>Team Won Toss</th>
+        <th>Attacking</th>
+        <th>Defending</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td>
+                <button class="toss-button" id="HomeTeam" onclick="selectTeam('HomeTeam')">HomeTeam</button>
+        </td>
+        <td>
+          <div class="radio-options">
+            <input class="form-check-input" type="checkbox" name="homeChoice" value="Attacking" id="flexCheckDefault">
+            <label for="homeAttacking">Attacking</label>
+          </div>
+        </td>
+        <td>
+          <div class="radio-options">
+            <input class="form-check-input" type="checkbox" name="homeChoice"  value="Defending" id="flexCheckDefault">
+            <label for="homeDefending">Defending</label>
+
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+                <button class="toss-button" id="AwayTeam" onclick="selectTeam('AwayTeam')">AwayTeam</button>
+        </td>
+        <td>
+          <div class="radio-options">
+            <input class="form-check-input" type="checkbox" name="awayChoice" value="Attacking" id="awayAttacking">
+            <label for="awayAttacking">Attacking</label>
+          </div>
+        </td>
+        <td>
+          <div class="radio-options">
+            <input class="form-check-input" type="checkbox" name="awayChoice" value="Defending" id="awayDefending">
+            <label for="awayDefending">Defending</label>
+          </div>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-m" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-m" id="confirmNavigate">Start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+document.querySelector('#dropdown1').addEventListener('change', function () {
+        const tournamentId = this.value;
+        const dropdown2=document.querySelector('#dropdown2');
+
+        if (!tournamentId) {
+            dropdown2.innerHTML = '<option value="" selected>Select a match</option>';
+            return;
+        }
+
+        fetch(`${window.location.origin}/GetMatches?tournamentId=${tournamentId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            }) 
+            .then(data => {
+                dropdown2.innerHTML = '<option value="" selected>Select a match</option>'; // Reset dropdown
+
+                if (data.length > 0) {
+                    data.forEach(match => {
+                        const option = document.createElement('option');
+                        option.value = match.id;
+                        option.textContent = match.name;
+                        dropdown2.appendChild(option);
+
+
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "No matches found";
+                    dropdown2.appendChild(option);
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching matches:', err);
+            });
+    });
+
+
+let selectedTeam = null;
+let selectedChoice = null;
+
+function getSelectedData() {
+    if (!selectedTeam) {
+        alert('Please select a team.');
+        return null;
+    }
+
+    const homeChoice = document.querySelector('input[name="homeChoice"]:checked');
+    const awayChoice = document.querySelector('input[name="awayChoice"]:checked');
+
+    const selectedCheckbox = homeChoice
+        ? { team: 'HomeTeam', choice: homeChoice.value }
+        : awayChoice
+        ? { team: 'AwayTeam', choice: awayChoice.value }
+        : null;
+
+    if (!selectedCheckbox) {
+        alert('Please select Attacking or Defending for the chosen team.');
+        return null;
+    }
+
+    let otherTeamChoice='';
+    let unselectedTeam='';
+    if(selectedCheckbox.team === 'HomeTeam')
+    {
+        otherTeamChoice=selectedCheckbox.choice === 'Attacking' ? 'Defending' : 'Attacking';
+        unselectedTeam='AwayTeam';
+    }
+    else if(selectedCheckbox.team === 'AwayTeam')
+    {
+        otherTeamChoice=selectedCheckbox.choice === 'Attacking' ? 'Defending' : 'Attacking';
+        unselectedTeam='HomeTeam';
+    }
+
+    return {
+        team1: selectedCheckbox.team,
+        team2: unselectedTeam,
+        choice:selectedCheckbox.choice,
+        otherTeamChoice: otherTeamChoice,
+
+    };
+}
+
+function selectTeam(teamId) {
+    if (selectedTeam && selectedTeam !== teamId) {
+        document.querySelector(`#${selectedTeam}`).classList.remove('selected');
+    }
+
+    selectedTeam = teamId;
+    document.querySelector(`#${teamId}`).classList.add('selected');
+}
+
+
+document.querySelector('#confirmNavigate').addEventListener('click', function () {
+    const selectedData = getSelectedData();
+
+    if (selectedData) {
+        const tournamentId = document.querySelector('#dropdown1').value;
+        const matchNo = document.querySelector('#dropdown2').value;
+
+        if (!tournamentId || !matchNo) {
+            alert('Please select Tournament and Match.');
+            return;
+        }
+
+        console.log(`Selected TournamentId: ${tournamentId}, Selected MatchNo: ${matchNo}`);
+
+        const queryString = new URLSearchParams({
+            tournamentId: tournamentId,
+            matchNo: matchNo,
+            team1: selectedData.team1,
+            team2: selectedData.team2,
+            choice: selectedData.choice,
+            otherTeamChoice: selectedData.otherTeamChoice
+        }).toString();
+        window.location.href = `/Scoring?${queryString}`;
+    }
+}); 
+
+
+function fetchTossData(tournamentId, matchNo) {
+    fetch(`${window.location.origin}/GetTossData?tournamentId=${tournamentId}&matchNo=${matchNo}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error fetching toss data: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const homeTeamButton = document.querySelector('#HomeTeam');
+            const awayTeamButton = document.querySelector('#AwayTeam');
+
+            if (data && data.length > 0) {
+                homeTeamButton.textContent = data[0].HomeTeam || 'No data';
+                awayTeamButton.textContent = data[0].AwayTeam || 'No data';
+
+                homeTeamButton.dataset.teamId = 'winner';
+                awayTeamButton.dataset.teamId = 'loosing';
+            } else {
+                homeTeamButton.textContent = 'No data found';
+                awayTeamButton.textContent = 'No data found';
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching toss data:', err);
+
+            const homeTeamButton = document.querySelector('#HomeTeam');
+            const awayTeamButton = document.querySelector('#AwayTeam');
+            homeTeamButton.textContent = 'Error loading data';
+            awayTeamButton.textContent = 'Error loading data';
+        });
+}
+
+
+
+</script>
+
+
+</body>
+</html>
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;  // Ensure this namespace is included
+
+public class IndexModel : PageModel
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<IndexModel> _logger;
+
+    public IndexModel(ApplicationDbContext context, ILogger<IndexModel> logger)
+    {
+        _context = context; 
+        _logger = logger;
+    }
+
+    public List<TournamentMaster> TournamentList { get; set; }
+    public List<MatchMaster> MatchList { get; set; }
+    public List<GetMatchNameTossData_Scoring> GetMatchNameTossDataScoringList{get;set;}
+    public async Task OnGetAsync(string tournamentId, string matchNo)
+    {
+        TournamentList = await _context.TournamentMaster    
+            .FromSqlInterpolated($"select idTournament,Tournament_Name from TournamentMaster")
+            .ToListAsync();
+
+
+        MatchList=await _context.MatchMaster
+        .FromSqlInterpolated($"select idTournament,MatchNo,Match_Name from MatchMaster")
+        .ToListAsync();
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+
+    
+    public class IndexController : Controller
+    {
+         public IActionResult Index(string tournamentId, string matchNo)
+        {
+            ViewBag.TournamentId = tournamentId;
+            ViewBag.MatchNo = matchNo;
+            return View();
+        }
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<IndexModel> _logger;
+
+
+        public IndexController(ApplicationDbContext context,ILogger<IndexModel> logger)
+        {
+            _context = context;
+            _logger=logger;
+        }
+
+        [HttpGet("GetMatches")]
+        public async Task<IActionResult> GetMatches(string tournamentId)
+        {
+            if (string.IsNullOrEmpty(tournamentId))
+            {
+                return BadRequest("Tournament ID is required.");
+            }
+
+             _logger.LogInformation($"Get Matches TournamentId: {tournamentId}");
+
+                var matches = await _context.MatchMaster
+                .Where(m => m.idTournament == tournamentId)
+                .Select(m => new { id = m.MatchNo, name = m.Match_Name })
+                .ToListAsync();
+
+            if (matches == null || !matches.Any())
+            {
+                return Json(new { message = "No matches found" });
+            }
+
+            var result = matches.Select(m => new { id = m.id, name = m.name }).ToList();
+
+            return Json(result);
+        }
+
+        [HttpGet("GetTossData")]
+        public async Task<IActionResult> GetTossData(string tournamentId, string matchNo)
+        {
+            if (string.IsNullOrEmpty(tournamentId) || string.IsNullOrEmpty(matchNo))
+            {
+                return BadRequest("Tournament ID and Match No are required.");
+            }
+
+            _logger.LogInformation($"Fetching toss data for TournamentId: {tournamentId}, MatchNo: {matchNo}");
+
+            var tossData = await _context.GetMatchNameTossDataScoring
+                .FromSqlRaw("EXEC GetMatchNameTossData_Scoring @TournamentId = {0}, @MatchNo = {1}", tournamentId, matchNo)
+                .ToListAsync();
+
+            if (tossData == null || !tossData.Any())
+            {
+                return Json(new { message = "No toss data found" });
+            }
+
+            var result = tossData.Select(t => new { id = t.idTournament, winner = t.HomeTeam, loosing = t.AwayTeam }).ToList();
+            Console.WriteLine(result);
+            return Json(result);
+        }
+
+    }
+
+    @page
+    @model ScoringModel
+    @{
+        ViewData["Title"] = "Home page";
+    }
+    
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Match Stats</title>
+        <link rel="stylesheet" href="/css/site.css">
+    
+    </head>
+    <body>
+    
+    <div class="container">
+    
+            <div class="left-panel">
+                <h2>SHILLONG LAJONG FC</h2>
+    
+                <div class="in-play">
+                    <div class="container-undo">
+                        <h3>IN PLAY</h3>
+                    </div>
+                    <ul id="inPlayList">
+                        @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                        {
+                            foreach (var player in Model.GetMatchStatsScoringList)
+                            {
+                                <li><button class="lstats-button">@player.HomePlayerName</button></li>
+                            }
+                        }
+                        else
+                        {
+                            <li>No players in play</li>
+                        }
+                    </ul>
+                </div>
+    
+                <div class="in-bench">
+                    <h3>ON BENCH</h3>
+                    <ul id="inBenchList">
+                         @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                        {
+                            foreach (var player in Model.GetMatchStatsScoringList)
+                            {
+                                <li><button class="lstats-button">@player.HomePlayerName</button></li>
+                            }
+                        }
+                        else
+                        {
+                            <li>No players in play</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+    
+        <div class="stats-panel">
+          <table>
+                    <tr>
+                        <th></th>
+                        <th>CHENNAI QUICK</th>
+                        <th>STAT</th>
+                        <th>GUJRAT GIANTS</th>
+                        <th></th>
+                    </tr>
+                   @if (Model.StatMasterList != null && Model.StatMasterList.Any())
+                    {
+                        @foreach (var stat in Model.StatMasterList)
+                        {
+                            <tr>
+                                <td>00</td>
+                                <td>00</td> 
+                                <td><button class="stats-button">@stat.Name</button></td> 
+                                <td>00</td> 
+                                <td>00</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="3">No data available</td></tr>
+                    }
+                </table>
+        </div>
+    
+        <div class="right-panel">
+           <h2>CHURCHILL BROTHERS</h2>
+                <div class="in-play">
+                    <div class="container-undo">
+                        <h3>IN PLAY</h3>
+                    </div>
+                    <ul>
+                             @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                        {
+                            foreach (var player in Model.GetMatchStatsScoringList)
+                            {
+                                <li><button class="lstats-button">@player.AwayPlayerName</button></li>
+                            }
+                        }
+                        else
+                        {
+                            <li>No players in play</li>
+                        }
+                        </ul>
+                </div>
+                <div class="in-bench">
+                    <h3>ON BENCH</h3>
+                    <ul>
+                             @if (Model.GetMatchStatsScoringList != null && Model.GetMatchStatsScoringList.Any())
+                        {
+                            foreach (var player in Model.GetMatchStatsScoringList)
+                            {
+                                <li><button class="lstats-button">@player.AwayPlayerName</button></li>
+                            }
+                        }
+                        else
+                        {
+                            <li>No players in play</li>
+                        }
+                        </ul>
+                </div>
+        </div>
+    
+    </div>
+    <script>
+    
+    
+    var matchNo = '@ViewBag.MatchNo';
+        var tournamentId = '@ViewBag.TournamentId';
+        console.log("Match No from View:", matchNo);
+        console.log("Tournament ID from View:", tournamentId);
+    
+    console.log("Fetching with URL:", `/Scoring/GetPlayerStats?matchNo=${matchNo}&tournamentId=${tournamentId}`);
+    
+    
+       fetch(`${window.location.origin}/GetPlayerStats?matchNo=${matchNo}&tournamentId=${tournamentId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch player stats');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const inPlayList = document.getElementById('inPlayList');
+                const inBenchList = document.getElementById('inBenchList');
+    
+                if (!inPlayList || !inBenchList) {
+                    console.error('Error: List elements not found');
+                    return;
+                }
+    
+                inPlayList.innerHTML = '';
+                inBenchList.innerHTML = '';
+    
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(player => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `Player ID: ${player.PlayerId} - Name: ${player.PlayerName}`;
+    
+                        if (player.Status === "In Play") {
+                            inPlayList.appendChild(listItem);
+                        } else if (player.Status === "In Bench") {
+                            inBenchList.appendChild(listItem);
+                        }
+                    });
+                } else {
+                    console.warn('No player data available or empty list');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+        });
+    );
+    
+    </script>
+    
+    
+    </body>
+    </html>
+
+    using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.Extensions.Logging;  
+using Newtonsoft.Json;
+
+public class ScoringModel : PageModel
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<ScoringModel> _logger;
+
+    public ScoringModel(ApplicationDbContext context, ILogger<ScoringModel> logger)
+    {
+        _context = context;  
+        _logger = logger;
+    }
+
+    public List<StatMaster> StatMasterList { get; set; }
+    public List<GetMatchStats_Scoring> GetMatchStatsScoringList {get;set;}
+
+
+    public async Task OnGetAsync(string tournamentId, string matchNo)
+    {
+        GetMatchStatsScoringList = await _context.GetMatchStatsScoring
+            .FromSqlInterpolated($"EXEC GetMatchStats_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            .ToListAsync();
+
+        if (GetMatchStatsScoringList == null || !GetMatchStatsScoringList.Any())
+        {
+            _logger.LogWarning($"No player data found for MatchNo {matchNo} and TournamentId {tournamentId}");
+        }
+
+        StatMasterList = await _context.StatMaster
+            .FromSqlInterpolated($"SELECT idStat, Name FROM StatMaster")
+            .ToListAsync();
+    }
+}
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Newtonsoft.Json;
+
+    
+    public class ScoringController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ScoringController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public IActionResult Scoring(string tournamentId, string matchNo, string selectedTeam, string choice)
+        {
+            if (string.IsNullOrEmpty(tournamentId) || string.IsNullOrEmpty(matchNo))
+            {
+                return BadRequest("Tournament ID and Match No are required.");
+            }
+
+            ViewBag.TournamentId = tournamentId;
+            ViewBag.MatchNo = matchNo;
+            ViewBag.SelectedTeam = selectedTeam;
+            ViewBag.Choice = choice;
+
+            var matchData = _context.MatchMaster
+                .FirstOrDefault(m => m.idTournament == tournamentId && m.MatchNo == matchNo);
+
+            if (matchData == null)
+            {
+                return NotFound("No match data found for the given Tournament and Match.");
+            }
+
+            return View("Scoring");
+        }
+
+    //    public IActionResult Scoring(string tournamentId, string matchNo)
+    //     {
+
+          
+    //         ViewBag.MatchNo = matchNo; 
+    //         ViewBag.TournamentId = tournamentId;
+
+    //         if (string.IsNullOrEmpty(tournamentId) || string.IsNullOrEmpty(matchNo))
+    //         {
+    //             return BadRequest("Tournament ID and Match No are required.");
+    //         }
+
+    //         var matchData = _context.MatchMaster
+    //             .Where(m => m.idTournament == tournamentId && m.MatchNo == matchNo)
+    //             .FirstOrDefault();
+
+    //         if (matchData == null)
+    //         {
+    //             return NotFound("No match data found for the given Tournament and Match.");
+    //         }
+
+    //         return View("Scoring");
+    //     }
+
+        public async Task<IActionResult> GetPlayerStats(string matchNo, string tournamentId)
+    {
+        // Call the stored procedure to get player stats
+        var playerStats = await _context.GetMatchStatsScoring
+            .FromSqlInterpolated($"EXEC GetMatchStats_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            .ToListAsync();
+
+        if (!playerStats.Any())
+        {
+            return NotFound(new { message = "No data found for the given MatchNo" });
+        }
+
+        return Json(playerStats);
+    }
+
+
+}
+
+
+let selectedTeam = null;
+let selectedChoice = null;
+
+function getSelectedData() {
+if (!selectedTeam) {
+    alert('Please select a team.');
+    return null;
+}
+
+const homeChoice = document.querySelector('input[name="homeChoice"]:checked');
+const awayChoice = document.querySelector('input[name="awayChoice"]:checked');
+
+const selectedCheckbox = homeChoice
+    ? { team: 'HomeTeam', choice: homeChoice.value }
+    : awayChoice
+    ? { team: 'AwayTeam', choice: awayChoice.value }
+    : null;
+
+if (!selectedCheckbox) {
+    alert('Please select Attacking or Defending for the chosen team.');
+    return null;
+}
+
+let otherTeamChoice='';
+let unselectedTeam='';
+if(selectedCheckbox.team === 'HomeTeam')
+{
+    otherTeamChoice=selectedCheckbox.choice === 'Attacking' ? 'Defending' : 'Attacking';
+    unselectedTeam='AwayTeam';
+}
+else if(selectedCheckbox.team === 'AwayTeam')
+{
+    otherTeamChoice=selectedCheckbox.choice === 'Attacking' ? 'Defending' : 'Attacking';
+    unselectedTeam='HomeTeam';
+}
+
+return {
+    team1: selectedCheckbox.team,
+    team2: unselectedTeam,
+    choice:selectedCheckbox.choice,
+    otherTeamChoice: otherTeamChoice,
+
+};
+}
+
+function selectTeam(teamId) {
+if (selectedTeam && selectedTeam !== teamId) {
+    document.querySelector(`#${selectedTeam}`).classList.remove('selected');
+}
+
+selectedTeam = teamId;
+document.querySelector(`#${teamId}`).classList.add('selected');
+}
+
+
+document.querySelector('#confirmNavigate').addEventListener('click', function () {
+const selectedData = getSelectedData();
+
+if (selectedData) {
+    const tournamentId = document.querySelector('#dropdown1').value;
+    const matchNo = document.querySelector('#dropdown2').value;
+
+    if (!tournamentId || !matchNo) {
+        alert('Please select Tournament and Match.');
+        return;
+    }
+
+    console.log(`Selected TournamentId: ${tournamentId}, Selected MatchNo: ${matchNo}`);
+
+    const queryString = new URLSearchParams({
+        tournamentId: tournamentId,
+        matchNo: matchNo,
+        team1: selectedData.team1,
+        team2: selectedData.team2,
+        choice: selectedData.choice,
+        otherTeamChoice: selectedData.otherTeamChoice
+    }).toString();
+    window.location.href = `/dataEnter?${queryString}`;
+}
+}); 
+
+
+function fetchTossData(tournamentId, matchNo) {
+fetch(`${window.location.origin}/GetTossData?tournamentId=${tournamentId}&matchNo=${matchNo}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error fetching toss data: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const homeTeamButton = document.querySelector('#HomeTeam');
+        const awayTeamButton = document.querySelector('#AwayTeam');
+
+        if (data && data.length > 0) {
+            homeTeamButton.textContent = data[0].HomeTeam || 'No data';
+            awayTeamButton.textContent = data[0].AwayTeam || 'No data';
+
+            homeTeamButton.dataset.teamId = 'winner';
+            awayTeamButton.dataset.teamId = 'loosing';
+        } else {
+            homeTeamButton.textContent = 'No data found';
+            awayTeamButton.textContent = 'No data found';
+        }
+    })
+    .catch(err => {
+        console.error('Error fetching toss data:', err);
+
+        const homeTeamButton = document.querySelector('#HomeTeam');
+        const awayTeamButton = document.querySelector('#AwayTeam');
+        homeTeamButton.textContent = 'Error loading data';
+        awayTeamButton.textContent = 'Error loading data';
+    });
+}
+--------------------------------------------------------------
+
+@page
+@model dataEntryModel
+@{
+    ViewData["Title"] = "Home page";
+    var tournamentId = ViewData["TournamentId"] as string;
+    var matchNo = ViewData["MatchNo"] as string;
+    var matchName = ViewData["MatchName"] as string;
+    var playerStats = Model.GetMatchStatsScoringList;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartForm</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container-data">
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Name</th>
+            <th scope="col">Batch No</th>
+            <th scope="col">Player Status</th>
+          </tr>
+        </thead>
+        <tbody>
+           @if (playerStats != null && playerStats.Any())
+            {
+                int serialNo = 1; // To generate S.No for each player
+                foreach (var player in playerStats)
+                {
+                    <tr>
+                        <th scope="row">@serialNo</th>
+                        <td>@player.HomePlayerName</td> <!-- Populate player name -->
+                        <td>
+                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                                <option value="" selected>Batch No</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                                <option value="" selected>Player status</option>
+                                <option value="InPlay">InPlay</option>
+                                <option value="InBench">InBench</option>
+                            </select>
+                        </td>
+                    </tr>
+                    serialNo++; // Increment the serial number for the next player
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">No player data available</td>
+                </tr>
+            }
+          @* <tr>
+            <th scope="row">1</th>
+            <td>Mark</td>
+            <td>
+                      <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                          <option value="" selected>Batch No</option>
+                          <option value="batchno">1</option>
+                          <option value="batchno">2</option>
+                          <option value="batchno">3</option>
+                          <option value="batchno">4</option>
+                      </select>
+            </td>
+            <td>
+                      <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                          <option value="" selected>Player status</option>
+                          <option value="playerStatus">InPlay</option>
+                          <option value="playerStatus">InBench</option>
+                      </select>
+            </td>
+          </tr> *@
+        </tbody>
+      </table>
+    </div>
+
+              <div class="middle-box">
+                <div>
+                    <label for="TeamName" class="form-label">Choose Winning Team</label>
+                    <select class="form-select" id="TeamName" name="TeamSelection" required>
+                        <option value="" selected>Select Team</option>           
+                       @foreach (var team in Model.GetMatchStatsScoringList
+                        .SelectMany(x => new[] { x.HomeTeamName, x.AwayTeamName })
+                        .Distinct())
+                          {
+                              <option value="@team">@team</option>
+                          }
+                    </select>
+                </div>
+                <div>
+                    <label for="PlayerStat" class="form-label">Choose Player Stat</label>
+                    <select class="form-select" id="PlayerStat" name="PlayerStatSelection" required>
+                        <option value="" selected>Select Attack or Defend</option>
+                        <option value="Attacking">Attacking</option>
+                        <option value="Defending">Defending</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-box" id="updateURL">Save</button>
+              </div>
+                
+
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Name</th>
+            <th>Batch No</th>
+            <th>Player Status</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">1</th>
+            <td>Mark</td>
+            <td>
+                      <select class="data-form" id="dropdown1" name="TournamentId" required>
+                          <option value="" selected>Batch no</option>
+                          <option value="batchno">1</option>
+                          <option value="batchno">2</option>
+                          <option value="batchno">3</option>
+                          <option value="batchno">4</option>
+                      </select>
+            </td>
+            <td>
+                      <select class="data-form" id="dropdown1" name="TournamentId" required>
+                        <option value="" selected>player status</option>
+                        <option value="playerStatus">InPlay</option>
+                        <option value="playerStatus">InBench</option>
+                      </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>
+
+
+--------------------------------------------------------------// const matchDropdown=document.querySelector('#dropdown1')
+// if(matchDropdown){
+//   matchDropdown.addEventListener('change', function () {
+//     const tournamentId = this.value;
+//     const dropdown2=document.querySelector('#dropdown2');
+
+//     if (!tournamentId) {
+//         dropdown2.innerHTML = '<option value="" selected>Select a match</option>';
+//         return;
+//     }
+
+//     fetch(`${window.location.origin}/GetMatches?tournamentId=${tournamentId}`)
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+//             return response.json();
+//         }) 
+//         .then(data => {
+//             console.log('Fetched matches:', data); // Inspect response data
+//             dropdown2.innerHTML = '<option value="" selected>Select a match</option>'; // Reset dropdown
+
+//             if (data.length > 0) {
+//                 data.forEach(match => {
+//                     const option = document.createElement('option');
+//                     option.value = match.id;
+//                     option.textContent = `${match.id} - ${match.name}`;
+//                     dropdown2.appendChild(option);
+
+
+//                 });
+//             } else {
+//                 const option = document.createElement('option');
+//                 option.value = "";
+//                 option.textContent = "No matches found";
+//                 dropdown2.appendChild(option);
+//             }
+//         })
+//         .catch(err => {
+//             console.error('Error fetching matches:', err);
+//         });
+// });
+// }
+
+
+---------------------------------------js------------------------------
+let matchDropdown = document.querySelector('#dropdown1');
+if (matchDropdown) {
+  matchDropdown.addEventListener('change', function () {
+    const tournamentId = this.value;
+    const matchDropdown2 = document.querySelector('#dropdown2');
+
+    if (!tournamentId) {
+      matchDropdown2.innerHTML = '<option value="" selected>Select a match</option>';
+      return;
+    }
+
+    fetch(`${window.location.origin}/GetMatches?tournamentId=${tournamentId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Fetched matches:', data); // Inspect response data
+        matchDropdown2.innerHTML = '<option value="" selected>Select a match</option>'; // Reset dropdown
+
+        if (data.length > 0) {
+          data.forEach(match => {
+            const option = document.createElement('option');
+            option.value = match.id;
+            option.textContent = `${match.id} - ${match.name}`;
+            matchDropdown2.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.value = "";
+          option.textContent = "No matches found";
+          matchDropdown2.appendChild(option);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching matches:', err);
+      });
+  });
+}
+
+
+
+///transfering data tournamentid , matchno, matchname and pass this data to /dataEnter page
+
+const confirmNavigateButton = document.querySelector('#confirmNavigatetodataEnter');
+if (confirmNavigateButton) {
+  confirmNavigateButton.addEventListener('click', function () {
+    let tournamentId = document.querySelector('#dropdown1').value;
+    const matchElement = document.querySelector('#dropdown2');
+    const matchNo = matchElement.value;
+    const matchName = matchElement.options[matchElement.selectedIndex]?.text || ""; // Get the match name (text of the option)
+
+    if (!tournamentId || !matchNo) {
+      alert('Please select both a tournament and a match.');
+      return;
+    }
+
+    const url = `/dataEnter?tournamentId=${encodeURIComponent(tournamentId)}&matchNo=${encodeURIComponent(matchNo)}&matchName=${encodeURIComponent(matchName)}`;
+    window.location.href = url;
+  });
+}
+
+
+const confirmNavigatetoScoring = document.querySelector('#confirmNavigatetoScoring');
+if (confirmNavigateButton) {
+  confirmNavigateButton.addEventListener('click', function () {
+    // const tournamentId = document.querySelector('#dropdown1').value;
+    // const matchElement = document.querySelector('#dropdown2');
+    // const matchNo = matchElement.value;
+    // const matchName = matchElement.options[matchElement.selectedIndex]?.text || ""; // Get the match name (text of the option)
+
+    // if (!tournamentId || !matchNo) {
+    //   alert('Please select both a tournament and a match.');
+    //   return;
+    // }
+
+    const url = `/Scoring`;
+    window.location.href = url;
+  });
+}
+
+
+if (confirmNavigateButton) {
+  confirmNavigateButton.addEventListener('click', function () {
+    const tournamentId = document.querySelector('#dropdown1').value;
+    const matchElement = document.querySelector('#dropdown2');
+    const matchNo = matchElement.value;
+    const matchName = matchElement.options[matchElement.selectedIndex]?.text || ""; // Get the match name (text of the option)
+
+    if (!tournamentId || !matchNo) {
+      alert('Please select both a tournament and a match.');
+      return;
+    }
+
+    const url = `/dataEnter?tournamentId=${encodeURIComponent(tournamentId)}&matchNo=${encodeURIComponent(matchNo)}&matchName=${encodeURIComponent(matchName)}`;
+    window.location.href = url;
+  });
+}
+
+//hidding middle-box
+document.addEventListener("DOMContentLoaded", function () {
+    const updateButton = document.getElementById("save");
+    if (updateButton) {
+      updateButton.addEventListener("click", function () {
+        const middleBox = document.querySelector(".middle-box");
+        if (middleBox) {
+          middleBox.style.display = "none"; // Hide the box
+        }
+      });
+    }
+  });
+
+
+  var matchStatsScoringList = new List<MatchStatsScoring>();
+
+    using (var connection = new SqlConnection(_connectionString))
+    {
+        using (var command = new SqlCommand("GetMatchStats_Scoring", connection))
+        {
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@MatchNo", matchNo);
+            command.Parameters.AddWithValue("@TournamentId", tournamentId);
+    
+            connection.Open();
+    
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var item = new MatchStatsScoring
+                    {
+                        // Map fields from the reader to your model
+                        Field1 = reader["Field1"].ToString(),
+                        Field2 = reader.GetInt32(reader.GetOrdinal("Field2")),
+                        // Add other fields as required
+                    };
+    
+                    matchStatsScoringList.Add(item);
+                }
+            }
+        }
+    }
+
+
+
+    ---------------------------------------------------------------------------a------h
+    //         dataEnterScoringListH = dataEnterScoringList
+//             .Where(item => item.team_category == "Home")
+//             .ToList();
+
+// foreach(var stat in dataEnterScoringListH){
+// Console.WriteLine("Home team - ",dataEnterScoringListH);
+// }
+
+//         dataEnterScoringListA = dataEnterScoringList
+//             .Where(item => item.team_category == "Away")
+//             .ToList();
+
+// foreach(var stat in dataEnterScoringListH){
+// Console.WriteLine("Away team - ",dataEnterScoringListA);
+// }
+
+
+
+------------------------------------------------sp-----------------------------------
+using (var connection = _context.Database.GetDbConnection())
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "EXEC dataEnter_Scoring @MatchNo, @TournamentId";
+                    command.Parameters.Add(new SqlParameter("@MatchNo", SqlDbType.NVarChar) { Value = matchNo });
+                    command.Parameters.Add(new SqlParameter("@TournamentId", SqlDbType.NVarChar) { Value = tournamentId });
+
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            Console.WriteLine($"PlayerName: {reader["playername"]}");
+                        }
+                    }
+                }
+            }
+
+
+
+            dataEnterScoringList = await _context.dataEnterScoring
+            .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            .ToListAsync();
+
+            var dataEnterScoringList = await _context.dataEnterScoring
+            .FromSqlRaw("EXEC dataEnter_Scoring @MatchNo = {0}, @TournamentId = {1}", matchNo, tournamentId)
+            .ToListAsync();
+            foreach(var stat in dataEnterScoringList){
+            Console.WriteLine($"Row count: {stat.playername}");
+            Console.WriteLine($"Row count: {dataEnterScoringList.Count}");
+            }
+
+
+            ---------------------------------------------------------------------------a------hdataEnterScoringAwayList = await _context.dataEnterScoring
+            .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            .AsNoTracking()    ///this is must for getting all data from SP
+            .ToListAsync();
+
+        dataEnterScoringAwayList = dataEnterScoringAwayList
+                .Where(item => item.team_category == "Away")
+                .ToList();
+
+
+
+
+        if (!dataEnterScoringAwayList.Any())
+        {
+            Console.WriteLine("No data returned from the stored procedure.");
+        }
+        else
+        {
+            foreach (var item in dataEnterScoringAwayList)
+            {
+                Console.WriteLine($"PlayerName: {item.playername}");
+            }
+        }
+
+            dataEnterScoringHomeList = await _context.dataEnterScoring
+            .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            .AsNoTracking()    ///this is must for getting all data from SP
+            .ToListAsync();
+
+            dataEnterScoringHomeList = dataEnterScoringHomeList
+                .Where(item => item.team_category == "Away")
+                .ToList();
+
+                
+        if (!dataEnterScoringHomeList.Any())
+        {
+            Console.WriteLine("No data returned from the stored procedure.");
+        }
+        else
+        {
+            foreach (var item in dataEnterScoringHomeList)
+            {
+                Console.WriteLine($"PlayerName: {item.playername}");
+            }
+        }
+
+--------------------------------------------------------------------------------------------------------------------
+        <div class="middle-box">
+            <div>
+                <label for="TeamName" class="form-label">Choose Winning Team</label>
+                <select class="form-select" id="TeamName" name="TeamSelection" required>
+                    <option value="" selected>Select Team</option>
+                          <option value="Home">@hometeamName</option>
+                          <option value="Away">@awayteamName</option>
+                </select>
+            </div>
+            <div>
+                <label for="PlayerStat" class="form-label">Choose Player Stat</label>
+                <select class="form-select" id="PlayerStat" name="PlayerStatSelection" required>
+                    <option value="" selected>Select Attack or Defend</option>
+                    <option value="Attacking">Attacking</option>
+                    <option value="Defending">Defending</option>
+                </select>
+            </div>
+            <button type="button" class="btn-box" id="save">Save</button>
+          </div>
+
+            <button type="button" class="btn-Toss" id="toggleButton">Toss</button>
+            <button type="button" class="btn-Scoring" id="confirmNavigatetoScoring">Scoring</button>
+
+
+            --------------------------------------------------------------------------------------------------------------------// public async Task OnGetAsync(string tournamentId, string matchNo)
+            // {
+        
+            //     dataEnterScoringList = await _context.dataEnterScoring
+            //         .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            //         .AsNoTracking()    ///this is must for getting all data from SP
+            //         .ToListAsync();
+        
+        
+            //     //away
+            //     dataEnterScoringAwayList = await _context.dataEnterScoring
+            //         .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            //         .AsNoTracking()    ///this is must for getting all data from SP
+            //         .ToListAsync();
+        
+            //     dataEnterScoringAwayList = dataEnterScoringAwayList
+            //             .Where(item => item.team_category == "Away")
+            //             .ToList();
+        
+            //     dataEnterScoringAwayList = await _context.dataEnterScoring
+            //                 .Where(p => p.idTournament == tournamentId && p.MatchNo == matchNo)
+            //                 .ToListAsync();
+        
+            //         //home
+            //         dataEnterScoringHomeList = await _context.dataEnterScoring
+            //         .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+            //         .AsNoTracking()    ///this is must for getting all data from SP
+            //         .ToListAsync();
+        
+            //         dataEnterScoringHomeList = dataEnterScoringHomeList
+            //             .Where(item => item.team_category == "Home")
+            //             .ToList();
+        
+        
+            //         dataEnterScoringHomeList = await _context.dataEnterScoring
+            //         .Where(p => p.idTournament == tournamentId && p.MatchNo == matchNo)
+            //         .ToListAsync();
+        
+                   
+                
+            // }
+        
+
+            --------------------------------------------------------------------------------------------------------------------
+            var matchdrop=document.querySelector('#dropdown1');
+if(matchdrop){
+  matchdrop.addEventListener('change', function () {
+    var tournamentId = this.value;
+    var matchDropdown2 = document.querySelector('#dropdown2');
+
+    if (!tournamentId) {
+      matchDropdown2.innerHTML = '<option value="" selected>Select a match</option>';
+      return;
+    }
+
+    fetch(`${window.location.origin}/GetMatches?tournamentId=${tournamentId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Fetched matches:', data); // Inspect response data
+        //matchDropdown2.innerHTML = '<option value="" selected>Select a match</option>'; // Reset dropdown
+
+        if (data.length > 0) {
+          data.forEach(match => {
+            const option = document.createElement('option');
+            option.value = match.id;
+            option.textContent = `${match.id} - ${match.name}`;
+            matchDropdown2.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.value = "";
+          option.textContent = "No matches found";
+          matchDropdown2.appendChild(option);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching matches:', err);
+      });
+  });
+}
+
+index.cshtml
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartForm</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container-form">
+        <h2 class="text-center">TOURNAMENT / MATCH</h2>
+        <form action="/Scoring" method="post">
+            <div class="mb-3">
+                <label for="dropdown1" class="form-label">TOURNAMENT</label>
+                <select class="form-select" id="dropdown1" name="TournamentId" required>
+                    <option value="" selected>Select an option</option>
+                    @if (Model.TournamentList != null && Model.TournamentList.Any())
+                    {    
+                        @foreach(var stat in Model.TournamentList)
+                        {
+                            <option value="@stat.idTournament">@stat.Tournament_Name</option>
+                        }
+                    }   
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="dropdown2" class="form-label">MATCH</label>
+                <select class="form-select" id="dropdown2" name="MatchId" required>
+                    @* <option value="" >Select a Match</option> *@
+                </select>
+            </div>
+            <div class="text-end">
+            <button type="button" class="btn" id="confirmNavigatetodataEnter">Go For Toss</button>
+            </div>
+        </form>
+
+        @* <a href="/dataEnter">
+            <img src="~/images/forward.svg" alt="Bottom right Image" class="bottom-right-img">
+        </a> *@
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+
+
+
+</script>
+
+
+</body>
+</html>
+
+
+--------------------------------------------------------------------------------------------------------------------@page
+@model dataEntryModel
+@{
+    ViewData["Title"] = "Home page";
+    var hometeamName = Model.dataEnterScoringHomeList?.FirstOrDefault()?.teamName;
+    var awayteamName = Model.dataEnterScoringAwayList?.FirstOrDefault()?.teamName;
+    var hometeamId = Model.dataEnterScoringHomeList?.FirstOrDefault()?.teamId;
+    var awayteamId = Model.dataEnterScoringAwayList?.FirstOrDefault()?.teamId;
+    var idTournament=Model.dataEnterScoringHomeList?.FirstOrDefault()?.idTournament;
+    var MatchId=Model.dataEnterScoringHomeList?.FirstOrDefault()?.idMatch;
+  }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    using _24IN_Ultimate_KHO_KHO_VS.Data;
+    using _24IN_Ultimate_KHO_KHO_VS.Data;
+    <title>StartForm</title>
+    <link rel="stylesheet" href="/css/site.css">
+
+</head>
+<body>
+
+<div class="container-data">
+    @* home team data *@
+    <form method="post" action="/dataEnter/SavePlayerDetail">
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col" name="HomeTeamName">@hometeamName</th>
+            <th scope="col">Batch No</th>
+            <th scope="col">Player Status</th>
+          </tr>
+        </thead>
+        <tbody>
+           @if (Model.dataEnterScoringHomeList != null && Model.dataEnterScoringHomeList.Any())
+            {
+                int serialNo = 1; // To generate S.No for each player
+                foreach (var player in Model.dataEnterScoringHomeList)
+                {
+                    <tr>
+                        <th scope="row">@serialNo</th>
+                        <td name="PlayerName">@player.playername</td> <!-- Populate player name -->
+                        <td>
+                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                                <option value="" selected>Batch No</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                                <option value="" selected>Player Status</option>
+                                <option value="InPlay">InPlay</option>
+                                <option value="InBench">InBench</option>
+                                <option value="NotUsed">NotUsed</option>
+                            </select>
+                        </td>
+                    </tr>
+                    serialNo++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">No player data available</td>
+                </tr>
+            }
+        </tbody>
+      </table>
+    </div>
+    </form>
+
+        @* toss data *@
+            <form method="post" action="/dataEnter/SaveToss">
+            <div class="middle-box">
+                <div>
+                    <label for="TeamName" class="form-label">Choose Winning Team</label>
+                    <select class="form-select" id="TeamName" name="teamSelection" required>
+                        <option value="" selected>Select Team</option>
+                        <option value="@hometeamId">@hometeamName</option>
+                        <option value="@awayteamId">@awayteamName</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="PlayerStat" class="form-label">Choose Player Stat</label>
+                    <select class="form-select" id="PlayerStat" name="playerStatSelection" required>
+                        <option value="" selected>Select Attack or Defend</option>
+                        <option value="Attacking">Attacking</option>
+                        <option value="Defending">Defending</option>
+                    </select>
+                </div>
+                <input type="hidden" name="MatchId" value="@MatchId" />
+                <input type="hidden" name="idTournament" value="@idTournament" />
+                <button type="submit" class="btn-box" id="save">Save</button>
+            </div>
+        </form>
+
+                <button type="button" class="btn-Toss" id="toggleButton">Toss</button>
+                <button type="button" class="btn-Scoring" id="confirmNavigatetoScoring">Scoring</button>
+
+
+@* away team data *@
+    <div class="box">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">@awayteamName</th>
+            <th>Batch No</th>
+            <th>Player Status</th>
+
+          </tr>
+        </thead>
+        <tbody>
+           @if (Model.dataEnterScoringAwayList != null && Model.dataEnterScoringAwayList.Any())
+            {
+                int serialNo = 1; // To generate S.No for each player
+                foreach (var player in Model.dataEnterScoringAwayList)
+                {
+                    <tr>
+                        <th scope="row">@serialNo</th>
+                        <td>@player.playername</td> <!-- Populate player name -->
+                        <td>
+                            <select class="data-form" id="dropdownBatch" name="BatchNo" required>
+                                <option value="" selected>Batch No</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="data-form" id="dropdownPStat" name="PlayerStatus" required>
+                                <option value="" selected>Player Status</option>
+                                <option value="InPlay">InPlay</option>
+                                <option value="InBench">InBench</option>
+                                <option value="NotUsed">NotUsed</option>
+                            </select>
+                        </td>
+                    </tr>
+                    serialNo++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">No player data available</td>
+                </tr>
+            }
+        </tbody>
+      </table>
+    </div>
+        @* <a href="/Scoring">
+            <img src="~/images/forward.svg" onclick="next()" alt="Bottom Right Image" class="bottom-right-img">
+        </a>
+        <a href="/dataEnter">
+            <img src="~/images/forward.svg" onclick="previous()" alt="Bottom left Image" class="bottom-left-img">
+        </a> *@
+  </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+
+<script>
+</script>
+
+</body>
+</html>
+
+
+
+-------------------------------------------------------------for loggs of playerdetails------------------------------------------------------- //    _logger.LogInformation($"Hometeamname count: {hometeamname.Count}");
+//    _logger.LogInformation($"awayteamname count: {awayteamname.Count}");
+    // _logger.LogInformation($"homePlayerName Count: {homePlayerName.Count}");
+    // _logger.LogInformation($"homeBatchNo Count: {homeBatchNo.Count}");
+    // _logger.LogInformation($"homePlayerStatus Count: {homePlayerStatus.Count}");
+    // _logger.LogInformation($"awayplayername Count: {awayplayername.Count}");
+    // _logger.LogInformation($"awayBatchNo Count: {awayBatchNo.Count}");
+    // _logger.LogInformation($"awayPlayerStatus Count: {awayPlayerStatus.Count}");
+
+
+
+
+
+    //"applicationUrl": "https://localhost:7154",
+
+
+    --------------------------------------------------------------------------------------------------------------------
+    {
+        "iisSettings": {
+          "windowsAuthentication": false,
+          "anonymousAuthentication": true,
+          "iisExpress": {
+            "applicationUrl": "https://localhost:44309",
+            "sslPort": 44309
+          }
+        },
+        "profiles": {
+          "_24IN_Ultimate_KHO_KHO_VS": {
+            "commandName": "Project",
+            "dotnetRunMessages": true,
+            "launchBrowser": true,
+            "applicationUrl": "http://192.168.1.9:5000;https://192.168.1.9:5001",
+            "environmentVariables": {
+              "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+          },
+          "IIS Express": {
+            "commandName": "IISExpress",
+            "launchBrowser": true,
+            "environmentVariables": {
+              "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+          }
+        }
+      }
+      
+      
+      --------------------------------------------------------------------------------------------------------------------
+      using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+public class dataEnterController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<dataEntryModel> _logger;
+
+        public dataEnterController(ApplicationDbContext context,ILogger<dataEntryModel> logger)
+        {
+            _context = context;
+            _logger=logger;
+        }
+
+    [BindProperty]
+    public Toss TossData { get; set; }
+    
+
+[HttpPost]
+public async Task<IActionResult> SaveToss(string teamSelection, string playerStatSelection,string idTournament, string matchNo,string matchId)
+{
+    try
+    {
+        _logger.LogInformation("SaveToss method invoked.");
+
+       _logger.LogInformation($"Received parameters: teamSelection={teamSelection}, playerStatSelection={playerStatSelection},matchno={matchNo}");
+
+        TossData = new Toss();
+
+        if (!string.IsNullOrEmpty(teamSelection))
+        {
+            TossData.TossWinnerId = teamSelection;
+        //    _logger.LogInformation($"TossWinnerId set to: {TossData.TossWinnerId}");
+        }
+        else
+        {
+            _logger.LogWarning("teamSelection is null or empty.");
+        }
+
+        if (!string.IsNullOrEmpty(playerStatSelection))
+        {
+            TossData.IsAttacking = playerStatSelection == "Attacking" ? "1" : "0";
+        //    _logger.LogInformation($"IsAttacking set to: {TossData.IsAttacking}");
+        }
+        else
+        {
+            _logger.LogWarning("playerStatSelection is null or empty.");
+        }
+
+        if (!string.IsNullOrEmpty(idTournament))
+        {
+            TossData.idTournament = idTournament;
+         //   _logger.LogInformation($"idTournament set to: {TossData.idTournament}");
+        }
+        else
+        {
+            _logger.LogWarning("idTournament is null or empty.");
+        }
+        if (!string.IsNullOrEmpty(matchId))
+        {
+            TossData.App_MatchId = matchId;
+        //    _logger.LogInformation($"App_MatchId set to: {TossData.App_MatchId}");
+        }
+        else
+        {
+            _logger.LogWarning("matchId is null or empty.");
+        }
+
+        _context.Toss.Add(TossData);
+        await _context.SaveChangesAsync();
+      
+        _logger.LogInformation("SaveToss - Toss data saved successfully.");
+        return RedirectToPage("/dataEnter", new { tournamentId = idTournament, matchNo, tossWinnerId = TossData.TossWinnerId, isAttacking = TossData.IsAttacking }); 
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while saving toss data.");
+        return StatusCode(500, "Internal server error.");
+    }
+}
+
+    [BindProperty]
+    public dataEnterPlayerDetails_Scoring  playerData {get;set;}
+
+[HttpPost]
+public async Task<IActionResult> SavePlayerDetail(string idTournament, string matchId, string isAttacking, string hometeamname, string hometeamId,string awayteamId, List<string> homeplayerid, List<string> awayplayerid, List<string> homePlayerName, List<string> homeBatchNo, List<string> homePlayerStatus, string awayteamname, List<string> awayplayername, List<string> awayBatchNo, List<string> awayPlayerStatus)
+{
+    try
+    {
+        ViewData["IsAttacking"] = isAttacking;
+        _logger.LogInformation("SavePlayerDetail method invoked."); 
+        _logger.LogInformation($"IsAttacking value received: {isAttacking}");
+     
+
+        var playersData = new List<dataEnterPlayerDetails_Scoring>();
+
+        for (int i = 0; i < homePlayerName.Count; i++)
+        {
+            // string homeTeamIsAttacking = "0"; 
+            // string awayTeamIsAttacking = "0"; 
+
+            //  if (tossWinnerId == hometeamId)
+            // {
+            //     homeTeamIsAttacking = isAttacking == "1" ? "1" : "0"; 
+            //     awayTeamIsAttacking = homeTeamIsAttacking == "1" ? "0" : "1";
+            // }
+            // else if (tossWinnerId == awayteamId)
+            // {
+            //     awayTeamIsAttacking = isAttacking == "1" ? "1" : "0"; 
+            //     homeTeamIsAttacking = awayTeamIsAttacking == "1" ? "0" : "1";
+            // }
+            var player = new dataEnterPlayerDetails_Scoring
+            {
+                idTournament=idTournament,
+                teamName = hometeamname,
+                playername = homePlayerName[i],
+                batchno = homeBatchNo[i],
+                playerstatus = homePlayerStatus[i],
+                team_category = "Home",
+                idMatch=matchId,
+                teamId=hometeamId,
+                playerid=homeplayerid[i],
+                IsAttacking=isAttacking
+                //IsAttacking=homeTeamIsAttacking
+            };
+
+            _logger.LogInformation($"Home Player Data: {isAttacking},{idTournament}, {hometeamname},{hometeamId},{homeplayerid[i]}, {homePlayerName[i]}");
+
+            playersData.Add(player);
+        }
+
+        for (int i = 0; i < awayplayername.Count; i++)
+        {
+            // string homeTeamIsAttacking = "0"; 
+            // string awayTeamIsAttacking = "0"; 
+
+            //  if (tossWinnerId == hometeamId)
+            // {
+            //     homeTeamIsAttacking = isAttacking == "1" ? "1" : "0"; 
+            //     awayTeamIsAttacking = homeTeamIsAttacking == "1" ? "0" : "1";
+            // }
+            // else if (tossWinnerId == awayteamId)
+            // {
+            //     awayTeamIsAttacking = isAttacking == "1" ? "1" : "0"; 
+            //     homeTeamIsAttacking = awayTeamIsAttacking == "1" ? "0" : "1";
+            // }
+            var player = new dataEnterPlayerDetails_Scoring
+            {
+                idTournament=idTournament,
+                teamName = awayteamname,
+                playername = awayplayername[i],
+                batchno = awayBatchNo[i],
+                playerstatus = awayPlayerStatus[i],
+                team_category = "Away",
+                idMatch=matchId,
+                teamId=awayteamId,
+                playerid=awayplayerid[i],
+                IsAttacking=isAttacking
+               // IsAttacking=awayTeamIsAttacking
+            };
+            _logger.LogInformation($"Away Player Data: {isAttacking},{idTournament}, {awayteamname},{awayteamId}, {awayplayerid[i]}, {awayplayername[i]}");
+
+            playersData.Add(player);
+        }
+
+        _context.dataEnterPlayerDetailsScoring.AddRange(playersData);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("SavePlayerDetail - player data saved successfully.");
+        return RedirectToPage("/Scoring",new { tournamentId = idTournament, matchId });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while saving player data.");
+        return StatusCode(500, "Internal server error.");
+    }
+}
+
+}
+---------------------------------------------------------------------------------------------------------
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+public class dataEnterController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<dataEntryModel> _logger;
+
+        public dataEnterController(ApplicationDbContext context,ILogger<dataEntryModel> logger)
+        {
+            _context = context;
+            _logger=logger;
+        }
+
+    [BindProperty]
+    public Toss TossData { get; set; }
+    
+
+[HttpPost]
+public async Task<IActionResult> SaveToss(string teamSelection, string playerStatSelection,string idTournament, string matchNo,string matchId)
+{
+    try
+    {
+        _logger.LogInformation("SaveToss method invoked.");
+
+       _logger.LogInformation($"Received parameters: teamSelection={teamSelection}, playerStatSelection={playerStatSelection},matchno={matchNo}");
+
+        TossData = new Toss();
+
+        if (!string.IsNullOrEmpty(teamSelection))
+        {
+            TossData.TossWinnerId = teamSelection;
+        //    _logger.LogInformation($"TossWinnerId set to: {TossData.TossWinnerId}");
+        }
+        else
+        {
+            _logger.LogWarning("teamSelection is null or empty.");
+        }
+
+        if (!string.IsNullOrEmpty(playerStatSelection))
+        {
+            TossData.IsAttacking = playerStatSelection == "Attacking" ? "1" : "0";
+        //    _logger.LogInformation($"IsAttacking set to: {TossData.IsAttacking}");
+        }
+        else
+        {
+            _logger.LogWarning("playerStatSelection is null or empty.");
+        }
+
+        if (!string.IsNullOrEmpty(idTournament))
+        {
+            TossData.idTournament = idTournament;
+         //   _logger.LogInformation($"idTournament set to: {TossData.idTournament}");
+        }
+        else
+        {
+            _logger.LogWarning("idTournament is null or empty.");
+        }
+        if (!string.IsNullOrEmpty(matchId))
+        {
+            TossData.App_MatchId = matchId;
+        //    _logger.LogInformation($"App_MatchId set to: {TossData.App_MatchId}");
+        }
+        else
+        {
+            _logger.LogWarning("matchId is null or empty.");
+        }
+
+        _context.Toss.Add(TossData);
+        await _context.SaveChangesAsync();
+      
+        _logger.LogInformation("SaveToss - Toss data saved successfully.");
+        return RedirectToPage("/dataEnter", new { tournamentId = idTournament, matchNo, tossWinnerId = TossData.TossWinnerId, isAttacking = TossData.IsAttacking }); 
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while saving toss data.");
+        return StatusCode(500, "Internal server error.");
+    }
+}
+
+    [BindProperty]
+    public dataEnterPlayerDetails_Scoring  playerData {get;set;}
+
+[HttpPost]
+public async Task<IActionResult> SavePlayerDetail(string idTournament, string tossWinnerId, string matchId, string isAttacking, string hometeamname, string hometeamId,string awayteamId, List<string> homeplayerid, List<string> awayplayerid, List<string> homePlayerName, List<string> homeBatchNo, List<string> homePlayerStatus, string awayteamname, List<string> awayplayername, List<string> awayBatchNo, List<string> awayPlayerStatus)
+{
+    try
+    {
+        ViewData["IsAttacking"] = isAttacking;
+        ViewData["TossWinnerId"]=tossWinnerId;
+        _logger.LogInformation("SavePlayerDetail method invoked."); 
+        _logger.LogInformation($"IsAttacking value received: {isAttacking}");
+        _logger.LogInformation($"TossWinnerId value received: {tossWinnerId}");
+
+        var playersData = new List<dataEnterPlayerDetails_Scoring>();
+
+        for (int i = 0; i < homePlayerName.Count; i++)
+        {
+            var trimmedHomePlayerStatus = homePlayerStatus.Select(status => status.Trim()).ToList();
+            var trimmedhomeBatchNo=homeBatchNo.Select(status=>status.Trim()).ToList();
+            _logger.LogInformation($"Received homePlayerStatus: {trimmedHomePlayerStatus[i]}");
+            var player = new dataEnterPlayerDetails_Scoring
+            {
+                idTournament=idTournament,
+                teamName = hometeamname,
+                playername = homePlayerName[i],
+                batchno = trimmedhomeBatchNo[i].Trim(),
+                playerstatus = trimmedHomePlayerStatus[i].Trim(),  
+                team_category = "Home",
+                idMatch=matchId,
+                teamId=hometeamId,
+                playerid=homeplayerid[i],
+                IsAttacking=isAttacking
+            };
+
+            _logger.LogInformation($"Home Player Data: {isAttacking},{idTournament}, {hometeamname},{hometeamId},{homeplayerid[i]}, {homePlayerName[i]}");
+//playerData.Update(player);
+            playersData.Add(player);
+        }
+
+        for (int i = 0; i < awayplayername.Count; i++)
+        {
+            var trimmedAwayPlayerStatus = awayPlayerStatus.Select(status => status.Trim()).ToList();
+            var trimmedawayBatchNo=awayBatchNo.Select(status=>status.Trim()).ToList();
+            var player = new dataEnterPlayerDetails_Scoring
+            {
+                idTournament=idTournament,
+                teamName = awayteamname,
+                playername = awayplayername[i],
+                batchno = awayBatchNo[i].Trim(),
+                playerstatus = awayPlayerStatus[i].Trim(),
+                team_category = "Away",
+                idMatch=matchId,
+                teamId=awayteamId,
+                playerid=awayplayerid[i],
+                IsAttacking=isAttacking
+            };
+            _logger.LogInformation($"Away Player Data: {isAttacking},{idTournament}, {awayteamname},{awayteamId}, {awayplayerid[i]}, {awayplayername[i]}");
+
+            playersData.Add(player);
+        }
+
+        _context.dataEnterPlayerDetailsScoring.AddRange(playersData);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("SavePlayerDetail - player data saved successfully.");
+        return RedirectToPage("/Scoring",new { tournamentId = idTournament, matchId,isAttacking,tossWinnerId,hometeamId,awayteamId });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while saving player data.");
+        return StatusCode(500, "Internal server error.");
+    }
+}
+
+}
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+public class dataEnterController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<dataEntryModel> _logger;
+
+        public dataEnterController(ApplicationDbContext context,ILogger<dataEntryModel> logger)
+        {
+            _context = context;
+            _logger=logger;
+        }
+
+[BindProperty]
+public Toss TossData { get; set; }
+
+[HttpPost]
+public async Task<IActionResult> SaveToss(int teamSelection, int playerStatSelection,string idTournament, string matchNo,string matchId)
+{
+    try
+    {
+        _logger.LogInformation("SaveToss method invoked.");
+
+       _logger.LogInformation($"Received parameters: teamSelection={teamSelection}, playerStatSelection={playerStatSelection},matchno={matchNo}");
+
+        TossData = new Toss(){
+            TossWinnerId = teamSelection,
+            IsAttacking = playerStatSelection == 1 ? 1 : 0,
+            idTournament = idTournament,
+            App_MatchId = matchId
+        };
+        var existingToss = await _context.Toss
+        .FirstOrDefaultAsync(t => t.App_MatchId == matchId);
+
+        if (existingToss != null)
+        {
+            existingToss.TossWinnerId = TossData.TossWinnerId;
+            existingToss.IsAttacking = TossData.IsAttacking;
+            existingToss.idTournament = TossData.idTournament;
+
+            _context.Toss.Update(existingToss);  
+            _logger.LogInformation("Existing toss data updated.");
+        }
+        else
+        {
+            _context.Toss.Add(TossData);
+            _logger.LogInformation("New toss data added.");
+        }
+
+        await _context.SaveChangesAsync();
+      
+        _logger.LogInformation("SaveToss - Toss data saved successfully.");
+        return RedirectToPage("/dataEnter", new { tournamentId = idTournament, matchNo, tossWinnerId = TossData.TossWinnerId, isAttacking = TossData.IsAttacking }); 
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while saving toss data.");
+        return StatusCode(500, "Internal server error.");
+    }
+}
+
+[BindProperty]
+public dataEnterPlayerDetails_Scoring  playerData {get;set;}
+
+[HttpPost]
+public async Task<IActionResult> SavePlayerDetail(string idTournament, int tossWinnerId, string matchId, int isAttacking, string hometeamname, string hometeamId,string awayteamId, List<string> homeplayerid, List<string> awayplayerid, List<string> homePlayerName, List<string> homeBatchNo, List<string> homePlayerStatus, string awayteamname, List<string> awayplayername, List<string> awayBatchNo, List<string> awayPlayerStatus)
+{
+
+    try
+{
+    int homeTeamIsAttacking = (tossWinnerId.ToString() == hometeamId) ? isAttacking : 0;
+    int awayTeamIsAttacking = (tossWinnerId.ToString() == awayteamId) ? isAttacking : 0;
+
+    // Combine home and away players for processing
+    var playersData = new List<dataEnterPlayerDetails_Scoring>();
+    var allPlayers = homePlayerName
+        .Select((name, i) => new
+        {
+            PlayerName = name.Trim(),
+            BatchNo = homeBatchNo[i].Trim(),
+            PlayerStatus = homePlayerStatus[i].Trim(),
+            TeamCategory = "Home",
+            TeamId = hometeamId,
+            PlayerId = homeplayerid[i],
+            IsAttacking = homeTeamIsAttacking,
+            TeamName = hometeamname
+        })
+        .Concat(awayplayername.Select((name, i) => new
+        {
+            PlayerName = name.Trim(),
+            BatchNo = awayBatchNo[i].Trim(),
+            PlayerStatus = awayPlayerStatus[i].Trim(),
+            TeamCategory = "Away",
+            TeamId = awayteamId,
+            PlayerId = awayplayerid[i],
+            IsAttacking = awayTeamIsAttacking,
+            TeamName = awayteamname
+        }));
+
+    // Fetch existing players for match in one query
+    var existingPlayers = await _context.dataEnterPlayerDetailsScoring
+        .Where(p => p.idMatch == matchId)
+        .ToDictionaryAsync(p => p.playerid);
+foreach (var kvp in existingPlayers)
+{
+    _logger.LogInformation($"PlayerId: {kvp.Key}, PlayerData: {kvp.Value}");
+}
+
+    foreach (var playerData in allPlayers)
+    {
+        if (existingPlayers.TryGetValue(playerData.PlayerId, out var existingPlayer))
+        {
+            // Update existing player data
+            existingPlayer.playername = playerData.PlayerName;
+            existingPlayer.batchno = playerData.BatchNo;
+            existingPlayer.playerstatus = playerData.PlayerStatus;
+            existingPlayer.IsAttacking = playerData.IsAttacking;
+
+            _context.dataEnterPlayerDetailsScoring.Update(existingPlayer);
+            // _logger.LogInformation($"Updated existing player data: {playerData.PlayerId}");
+        }
+        else
+        {
+            // Add new player data
+            playersData.Add(new dataEnterPlayerDetails_Scoring
+            {
+                idTournament = idTournament,
+                teamName = playerData.TeamName,
+                playername = playerData.PlayerName,
+                batchno = playerData.BatchNo,
+                playerstatus = playerData.PlayerStatus,
+                team_category = playerData.TeamCategory,
+                idMatch = matchId,
+                teamId = playerData.TeamId,
+                playerid = playerData.PlayerId,
+                IsAttacking = playerData.IsAttacking
+            });
+            // _logger.LogInformation($"Added new player data: {playerData.PlayerId}");
+        }
+    }
+
+    // Bulk insert new players
+    if (playersData.Any())
+    {
+        await _context.dataEnterPlayerDetailsScoring.AddRangeAsync(playersData);
+    }
+
+    await _context.SaveChangesAsync();
+    // _logger.LogInformation("SavePlayerDetail - player data saved successfully.");
+
+    return RedirectToPage("/Scoring", new
+    {
+        tournamentId = idTournament,
+        matchId,
+        isAttacking,
+        tossWinnerId,
+        hometeamId,
+        awayteamId
+    });
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Error occurred while saving player data.");
+    return StatusCode(500, "Internal server error.");
+}
+
+    // try
+    // {
+    //     ViewData["IsAttacking"] = isAttacking;
+    //     ViewData["TossWinnerId"]=tossWinnerId;
+    //     _logger.LogInformation("SavePlayerDetail method invoked."); 
+    //     _logger.LogInformation($"IsAttacking value received: {isAttacking}");
+    //     _logger.LogInformation($"TossWinnerId value received: {tossWinnerId}");
+
+    //     var playersData = new List<dataEnterPlayerDetails_Scoring>();
+
+    //     for (int i = 0; i < homePlayerName.Count; i++)
+    //     {
+    //         var trimmedHomePlayerStatus = homePlayerStatus.Select(status => status.Trim()).ToList();
+    //         var trimmedhomeBatchNo=homeBatchNo.Select(status=>status.Trim()).ToList();
+    //         _logger.LogInformation($"Received homePlayerStatus: {trimmedHomePlayerStatus[i]}");
+
+    //         var player = new dataEnterPlayerDetails_Scoring
+    //         {
+    //             idTournament=idTournament,
+    //             teamName = hometeamname,
+    //             playername = homePlayerName[i],
+    //             batchno = trimmedhomeBatchNo[i].Trim(),
+    //             playerstatus = trimmedHomePlayerStatus[i].Trim(),  
+    //             team_category = "Home",
+    //             idMatch=matchId,
+    //             teamId=hometeamId,
+    //             playerid=homeplayerid[i],
+    //             IsAttacking=isAttacking
+    //         };
+
+    //         var existingHomePlayer = await _context.dataEnterPlayerDetailsScoring
+    //         .FirstOrDefaultAsync(p => p.idMatch == matchId && p.playerid == homeplayerid[i]);
+
+    //         if (existingHomePlayer != null)
+    //         {
+    //             // Update existing player data
+    //             existingHomePlayer.playername = player.playername;
+    //             existingHomePlayer.batchno = player.batchno;
+    //             existingHomePlayer.playerstatus = player.playerstatus;
+    //             existingHomePlayer.IsAttacking = player.IsAttacking;
+    //             _context.dataEnterPlayerDetailsScoring.Update(existingHomePlayer);
+    //             _logger.LogInformation($"Updated existing home player data: {homeplayerid[i]}");
+    //         }
+    //         else{
+    //             playersData.Add(player);
+    //             _logger.LogInformation($"New home player data added: {homeplayerid[i]}");
+    //         }
+
+            
+    //     }
+
+    //     for (int i = 0; i < awayplayername.Count; i++)
+    //     {
+    //         var trimmedAwayPlayerStatus = awayPlayerStatus.Select(status => status.Trim()).ToList();
+    //         var trimmedawayBatchNo=awayBatchNo.Select(status=>status.Trim()).ToList();
+    //         var player = new dataEnterPlayerDetails_Scoring
+    //         {
+    //             idTournament=idTournament,
+    //             teamName = awayteamname,
+    //             playername = awayplayername[i],
+    //             batchno = awayBatchNo[i].Trim(),
+    //             playerstatus = awayPlayerStatus[i].Trim(),
+    //             team_category = "Away",
+    //             idMatch=matchId,
+    //             teamId=awayteamId,
+    //             playerid=awayplayerid[i],
+    //             IsAttacking=isAttacking
+    //         };
+    //         var existingAwayPlayer = await _context.dataEnterPlayerDetailsScoring
+    //         .FirstOrDefaultAsync(p => p.idMatch == matchId && p.playerid == awayplayerid[i]);
+
+    //         if (existingAwayPlayer != null)
+    //         {
+    //             // Update existing player data
+    //             existingAwayPlayer.playername = player.playername;
+    //             existingAwayPlayer.batchno = player.batchno;
+    //             existingAwayPlayer.playerstatus = player.playerstatus;
+    //             existingAwayPlayer.IsAttacking = player.IsAttacking;
+    //             _context.dataEnterPlayerDetailsScoring.Update(existingAwayPlayer);
+    //             _logger.LogInformation($"Updated existing away player data: {awayplayerid[i]}");
+    //         }
+    //         else{
+    //         playersData.Add(player);
+    //         _logger.LogInformation($"New away player data added: {awayplayerid[i]}");
+
+    //         }
+    //     }
+    //     // if(playerData.Any())
+    //     // {
+    //         _context.dataEnterPlayerDetailsScoring.AddRange(playersData);
+    //    // }
+    //     await _context.SaveChangesAsync();
+
+    //     _logger.LogInformation("SavePlayerDetail - player data saved successfully.");
+    //     return RedirectToPage("/Scoring",new { tournamentId = idTournament, matchId,isAttacking,tossWinnerId,hometeamId,awayteamId });
+    // }
+    // catch (Exception ex)
+    // {
+    //     _logger.LogError(ex, "Error occurred while saving player data.");
+    //     return StatusCode(500, "Internal server error.");
+    // }
+
+
+}
+
+}
+
+-----------------------------------Scoring----------------------------------------------------------------------using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using _24IN_Ultimate_KHO_KHO_VS.Data;
+using Microsoft.Extensions.Logging;  
+using Newtonsoft.Json;
+
+public class ScoringModel : PageModel
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<ScoringModel> _logger;
+
+    public ScoringModel(ApplicationDbContext context, ILogger<ScoringModel> logger)
+    {
+        _context = context;  
+        _logger = logger;
+    }
+
+    public List<HowOut> HowOutList { get; set; }
+    public List<dataEnterPlayerDetails_Scoring> dataEnterPlayerDetailsScoringList {get;set;}
+    public List<dataEnterPlayerDetails_Scoring> homeInplay {get;set;}
+    public List<dataEnterPlayerDetails_Scoring> awayInplay {get;set;}
+     public List<dataEnterPlayerDetails_Scoring> homeInbench {get;set;}
+    public List<dataEnterPlayerDetails_Scoring> awayInbench {get;set;}
+    public List<Toss> tosses {get;set;}
+
+
+public async Task OnGetAsync(string tournamentId, string matchId, int isAttacking, int tossWinnerId, string hometeamId, string awayteamId)
+{
+    try
+    {
+        ViewData["MatchId"] = matchId;
+        ViewData["IsAttacking"] = isAttacking;
+        ViewData["TossWinnerId"] = tossWinnerId;
+        ViewData["HomeTeamId"] = hometeamId;
+        ViewData["AwayTeamId"] = awayteamId;
+
+        _logger.LogInformation($"Received parameters in scoring: tournamentId={tournamentId}, matchId={matchId}, isAttacking={isAttacking}, tossWinnerId={tossWinnerId}, hometeamId={hometeamId}, awayteamId={awayteamId}");
+
+        var dataEnter = await _context.dataEnterPlayerDetailsScoring
+            .FromSqlInterpolated($"select * from dataEnterPlayerDetails_Scoring")
+            .ToListAsync();
+foreach(var stat in dataEnter){
+    _logger.LogInformation($"dataenter: {stat.playername}");
+}
+
+        var homeTeamAttacking = tossWinnerId.ToString() == hometeamId ? isAttacking : 0;
+        var awayTeamAttacking = tossWinnerId.ToString() == awayteamId ? isAttacking : 0;
+       
+        bool isHomeTeamAttacking = homeTeamAttacking == 1;
+
+        if (isHomeTeamAttacking)
+        {
+            // Home team is attacking
+            homeInplay = dataEnter
+                .Where(p => p.team_category == "Home" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InPlay")
+                .ToList();
+
+            homeInbench = dataEnter
+                .Where(p => p.team_category == "Home" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InBench")
+                .ToList();
+
+            awayInplay = dataEnter
+                .Where(p => p.team_category == "Away" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InPlay")
+                .ToList();
+
+            awayInbench = dataEnter
+                .Where(p => p.team_category == "Away" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InBench")
+                .ToList();
+        }
+        else
+        {
+            // Away team is attacking
+            awayInplay = dataEnter
+                .Where(p => p.team_category == "Away" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InPlay")
+                .ToList();
+
+            awayInbench = dataEnter
+                .Where(p => p.team_category == "Away" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InBench")
+                .ToList();
+
+            homeInplay = dataEnter
+                .Where(p => p.team_category == "Home" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InPlay")
+                .ToList();
+
+            homeInbench = dataEnter
+                .Where(p => p.team_category == "Home" && p.idTournament == tournamentId && p.idMatch == matchId && p.playerstatus.Trim() == "InBench")
+                .ToList();
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError($"Error fetching data: {ex.Message}");
+    }
+
+    HowOutList = await _context.HowOuts
+        .FromSqlInterpolated($"SELECT * FROM HowOut")
+        .ToListAsync();
+}
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+

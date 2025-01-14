@@ -5,8 +5,20 @@
       "PackagePath": "staticwebassets\\24IN_Ultimate_KHO_KHO_VS.h1z5hfdzkc.bundle.scp.css"
     },
     {
+      "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\css\\data",
+      "PackagePath": "staticwebassets\\css"
+    },
+    {
+      "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\css\\index",
+      "PackagePath": "staticwebassets\\css"
+    },
+    {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\css\\roughData.html",
       "PackagePath": "staticwebassets\\css\\roughData.html"
+    },
+    {
+      "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\css\\scoring",
+      "PackagePath": "staticwebassets\\css"
     },
     {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\css\\site.css",
@@ -15,6 +27,10 @@
     {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\favicon.ico",
       "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\images\\forward.svg",
+      "PackagePath": "staticwebassets\\images\\forward.svg"
     },
     {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\images\\m.png",
@@ -27,10 +43,6 @@
     {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\images\\wtv-logo.svg",
       "PackagePath": "staticwebassets\\images\\wtv-logo.svg"
-    },
-    {
-      "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\js\\WebSocket.js",
-      "PackagePath": "staticwebassets\\js\\WebSocket.js"
     },
     {
       "Id": "D:\\24IN_Ultimate_KHO_KHO_VS\\wwwroot\\js\\site.js",

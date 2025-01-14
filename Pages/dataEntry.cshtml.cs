@@ -16,73 +16,95 @@ public class dataEntryModel : PageModel
         _logger = logger;
     }
 
-    public List<GetMatchStats_Scoring> GetMatchStatsScoringList {get;set;}
-    public List<PlayerMaster> PlayerMasterList{get;set;}
     public List<dataEnter_Scoring> dataEnterScoringAwayList {get;set;}
     public List<dataEnter_Scoring> dataEnterScoringHomeList {get;set;}
+    public List<dataEnter_Scoring> dataEnterScoringList {get;set;} 
+    public List<dataEnterPlayerDetails_Scoring> dataEnterPlayerDetailsScoringsList{get;set;}
+    public List<dataEnterPlayerDetails_Scoring> dataEnterPlayerDetailsScoringsHomeList{get;set;}
+    public List<dataEnterPlayerDetails_Scoring> dataEnterPlayerDetailsScoringsAwayList{get;set;}
 
-
-    public async Task OnGetAsync(string tournamentId, string matchNo)
+    [BindProperty]
+    public string MatchId{get;set;}
+public async Task OnGetAsync(string tournamentId, string MatchNo, int isAttacking, int tossWinnerId, string matchId)
+{
+    try
     {
-       
-        GetMatchStatsScoringList =await _context.GetMatchStatsScoring
-            .FromSqlInterpolated($"EXEC GetMatchStats_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
+        ViewData["IsAttacking"] = isAttacking;
+        ViewData["TossWinnerId"] = tossWinnerId;
+        ViewData["MatchNo"]=MatchNo;
+
+// _logger.LogInformation($"Fetching data in ON GET for MatchNo: {MatchNo}, TournamentId: {tournamentId}, matchid : {matchId}");
+
+        var playerData = await _context.dataEnterPlayerDetailsScoring
+            .Where(p => p.idMatch == matchId && p.idTournament == tournamentId)    //&& p.batchno != 0
             .ToListAsync();
 
-        if (GetMatchStatsScoringList == null || !GetMatchStatsScoringList.Any())
+    // _logger.LogInformation($"Fetched {playerData.Count} records from dataEnterPlayerDetailsScoring for MatchId: {MatchId} and TournamentId: {tournamentId}");
+    _logger.LogInformation($"Executed SQL query: {playerData}");
+
+
+        if (playerData.Any())
         {
-            _logger.LogWarning($"No player data found for MatchNo {matchNo} and TournamentId {tournamentId}");
-        }
+_logger.LogInformation($"Fetched {playerData.Count} player records from dataEnterPlayerDetailsScoring.");
+        _logger.LogInformation($"Fetched {playerData.Count} records from dataEnterPlayerDetailsScoring for MatchId: {matchId} and TournamentId: {tournamentId}. Data: {Newtonsoft.Json.JsonConvert.SerializeObject(playerData)}");
 
 
-        dataEnterScoringAwayList = await _context.dataEnterScoring
-            .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
-            .AsNoTracking()    ///this is must for getting all data from SP
-            .ToListAsync();
 
-        dataEnterScoringAwayList = dataEnterScoringAwayList
-                .Where(item => item.team_category == "Home")
+            dataEnterScoringHomeList = playerData
+                .Where(p => p.team_category == "Home")
+                .Select(p => new dataEnter_Scoring
+                {
+                    idMatch = p.idMatch,
+                    playername = p.playername, 
+                    teamName = p.teamName,  
+                    playerid = p.playerid, 
+                    teamId = p.teamId,    
+                    team_category=p.team_category,          
+                    idTournament=p.idTournament,
+                    playerstatus=p.playerstatus,
+                    batchno=p.batchno,
+                    isWazir=p.iswazir
+                     })
                 .ToList();
 
-
-
-
-        if (!dataEnterScoringAwayList.Any())
-        {
-            Console.WriteLine("No data returned from the stored procedure.");
+            dataEnterScoringAwayList = playerData
+                .Where(p => p.team_category == "Away")
+                .Select(p => new dataEnter_Scoring
+                {
+                    idMatch = p.idMatch,
+                    playername = p.playername, 
+                    teamName = p.teamName,  
+                    playerid = p.playerid, 
+                    teamId = p.teamId,
+                    team_category=p.team_category,
+                    idTournament=p.idTournament,
+                    playerstatus=p.playerstatus,
+                    batchno=p.batchno,
+                    isWazir=p.iswazir  
+                })
+                .ToList();
         }
         else
         {
-            foreach (var item in dataEnterScoringAwayList)
-            {
-                Console.WriteLine($"PlayerName: {item.playername}");
-            }
+            
+
+            var allScoringData = await _context.dataEnterScoring
+                .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {MatchNo}, @TournamentId = {tournamentId}")
+                .AsNoTracking()
+                .ToListAsync();
+
+            dataEnterScoringHomeList = allScoringData.Where(p => p.team_category == "Home").ToList();
+            dataEnterScoringAwayList = allScoringData.Where(p => p.team_category == "Away").ToList();
+_logger.LogInformation($"Fetched {allScoringData.Count} player records from dataEnter.");
+            _logger.LogInformation($"Fetched {allScoringData.Count} records from dataEnterScoring for MatchNo: {MatchNo} and TournamentId: {tournamentId}. Data: {Newtonsoft.Json.JsonConvert.SerializeObject(allScoringData)}");
+
+
         }
-
-            dataEnterScoringHomeList = await _context.dataEnterScoring
-            .FromSqlInterpolated($"EXEC dataEnter_Scoring @MatchNo = {matchNo}, @TournamentId = {tournamentId}")
-            .AsNoTracking()    ///this is must for getting all data from SP
-            .ToListAsync();
-
-            dataEnterScoringHomeList = dataEnterScoringHomeList
-                .Where(item => item.team_category == "Away")
-                .ToList();
-
-                
-        if (!dataEnterScoringHomeList.Any())
-        {
-            Console.WriteLine("No data returned from the stored procedure.");
-        }
-        else
-        {
-            foreach (var item in dataEnterScoringHomeList)
-            {
-                Console.WriteLine($"PlayerName: {item.playername}");
-            }
-        }
-
-
     }
-
+    catch (Exception ex)
+    {
+        _logger.LogError($"Error fetching data: {ex.Message}");
+    }
+}
 
 }
